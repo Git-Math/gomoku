@@ -25,11 +25,12 @@ WINDOW_HEIGHT = GRID_START + GRID_SIZE + GRID_START
 PLAYER_1_COLOR = "black"
 PLAYER_2_COLOR = "white"
 PIECE_RADIUS = int(SQUARE_SIZE / 2.3)
-IA_DEPTH = 2
+IA_DEPTH = 10
 MIN_VALUE = -100000
 MAX_VALUE = 100000
-PLAYER_NUMBER = 2
+PLAYER_NUMBER = 1
 PROXIMITY_MAX = 1
+COUNT_MAX = 3
 
 
 # function used for debug log
@@ -39,17 +40,20 @@ def debug_log(message):
 
 ## IA functions
 def ia(score, grid, player, is_continue, continue_line, continue_column, depth):
+	count = 0
 	alpha = MIN_VALUE - 1
 	beta = MAX_VALUE + 1
 	max_line = 0
 	max_column = 0
 	line = 0
+	is_second_turn = False
 	other_player = 2 if player == 1 else 1
 
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not check_proximity(grid, line, column):
+			if not is_second_turn and not check_ia_move(grid, line, column)		\
+			or is_second_turn and not check_proximity(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, player, line, column)
@@ -60,8 +64,13 @@ def ia(score, grid, player, is_continue, continue_line, continue_column, depth):
 					current_value = MIN_VALUE
 				elif check_alignment(grid, player, line, column):
 					current_value = ia_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				else:
+				elif count < COUNT_MAX:
+					count += 1
 					current_value = ia_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+				else:
+					cancel_move(score, grid, player, line, column, eat)
+					column += 1
+					continue
 				if current_value > alpha:
 					alpha = current_value
 					max_line = line
@@ -69,13 +78,21 @@ def ia(score, grid, player, is_continue, continue_line, continue_column, depth):
 				cancel_move(score, grid, player, line, column, eat)
 			column += 1
 		line += 1
+		# if no possible move is found
+		if line == LINE_NUMBER and column == LINE_NUMBER and alpha == MIN_VALUE - 1:
+			line = 0
+			column = 0
+			is_second_turn = True
+
 	debug_log(alpha)
 	return max_line, max_column
 
 def ia_min(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	min_value = MAX_VALUE + 1
 	line = 0
+	is_second_turn = False
 	other_player = 2 if player == 1 else 1
+	count = 0
 
 	if depth == 0:
 		if is_continue:
@@ -85,7 +102,8 @@ def ia_min(score, grid, player, is_continue, continue_line, continue_column, dep
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not check_proximity(grid, line, column):
+			if not is_second_turn and not check_ia_move(grid, line, column)		\
+			or is_second_turn and not check_proximity(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, other_player, line, column)
@@ -96,8 +114,13 @@ def ia_min(score, grid, player, is_continue, continue_line, continue_column, dep
 					current_value = MAX_VALUE - (IA_DEPTH - depth)
 				elif check_alignment(grid, other_player, line, column):
 					current_value = ia_max(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				else:
+				elif count < COUNT_MAX:
+					count += 1
 					current_value = ia_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+				else:
+					cancel_move(score, grid, player, line, column, eat)
+					column += 1
+					continue
 				min_value = min(current_value, min_value)
 				cancel_move(score, grid, other_player, line, column, eat)
 				if alpha >= current_value:
@@ -105,13 +128,20 @@ def ia_min(score, grid, player, is_continue, continue_line, continue_column, dep
 				beta = min(min_value, beta)
 			column += 1
 		line += 1
+		# if no possible move is found
+		if line == LINE_NUMBER and column == LINE_NUMBER and min_value == MAX_VALUE + 1:
+			line = 0
+			column = 0
+			is_second_turn = True
 
 	return beta
 
 def ia_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	max_value = MIN_VALUE - 1
 	line = 0
+	is_second_turn = False
 	other_player = 2 if player == 1 else 1
+	count = 0
 
 	if depth == 0:
 		if is_continue:
@@ -121,7 +151,8 @@ def ia_max(score, grid, player, is_continue, continue_line, continue_column, dep
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not check_proximity(grid, line, column):
+			if not is_second_turn and not check_ia_move(grid, line, column)		\
+			or is_second_turn and not check_proximity(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, player, line, column)
@@ -129,11 +160,16 @@ def ia_max(score, grid, player, is_continue, continue_line, continue_column, dep
 				if score[player] >= 10:
 					current_value = MAX_VALUE - (IA_DEPTH - depth)
 				elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
-					current_value = MIN_VALUE - (IA_DEPTH - depth)
+					current_value = MIN_VALUE + (IA_DEPTH - depth)
 				elif check_alignment(grid, player, line, column):
 					current_value = ia_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				else:
+				elif count < COUNT_MAX:
+					count += 1;
 					current_value = ia_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+				else:
+					cancel_move(score, grid, player, line, column, eat)
+					column += 1
+					continue
 				max_value = max(current_value, max_value)
 				cancel_move(score, grid, player, line, column, eat)
 				if beta <= current_value:
@@ -141,8 +177,45 @@ def ia_max(score, grid, player, is_continue, continue_line, continue_column, dep
 				alpha = max(max_value, alpha)
 			column += 1
 		line += 1
+		# if no possible move is found
+		if line == LINE_NUMBER and column == LINE_NUMBER and max_value == MIN_VALUE - 1:
+			line = 0
+			column = 0
+			is_second_turn = True
 
 	return alpha
+
+def check_ia_move(grid, line, column):
+	if check_ia_move_direction(grid, line, column, 0, 1):
+		return True
+	if check_ia_move_direction(grid, line, column, 1, 0):
+		return True
+	if check_ia_move_direction(grid, line, column, 1, 1):
+		return True
+	if check_ia_move_direction(grid, line, column, -1, 1):
+		return True
+	return False
+
+def check_ia_move_direction(grid, line, column, direction_line, direction_column):
+	line_plus_one = line + direction_line
+	column_plus_one = column + direction_column
+	line_plus_two = line_plus_one + direction_line
+	column_plus_two = column_plus_one + direction_column
+	line_minus_one = line - direction_line
+	column_minus_one = column - direction_column
+	line_minus_two = line_minus_one - direction_line
+	column_minus_two = column_minus_one - direction_column
+
+	if line_minus_two >= 0 and line_minus_two < LINE_NUMBER and column_minus_two >= 0 and column_minus_two < LINE_NUMBER and grid[line_minus_one][column_minus_one] != 0 and grid[line_minus_one][column_minus_one] == grid[line_minus_two][column_minus_two]		\
+	or line_plus_two >= 0 and line_plus_two < LINE_NUMBER and column_plus_two >= 0 and column_plus_two < LINE_NUMBER and grid[line_plus_one][column_plus_one] != 0 and grid[line_plus_one][column_plus_one] == grid[line_plus_two][column_plus_two]					\
+	or line_minus_one >= 0 and line_minus_one < LINE_NUMBER and column_minus_one >= 0 and column_minus_one < LINE_NUMBER and line_plus_one >= 0 and line_plus_one < LINE_NUMBER and column_plus_one >= 0 and column_plus_one < LINE_NUMBER and grid[line_minus_one][column_minus_one] != 0 and grid[line_minus_one][column_minus_one] == grid[line_plus_one][column_plus_one]:
+		return True
+
+	return False
+
+
+
+	return False
 
 def check_proximity(grid, line, column):
 	if check_proximity_direction(grid, line, column, 0, 1):
