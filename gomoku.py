@@ -6,6 +6,13 @@ except ImportError:
     from tkinter import *   ## notice lowercase 't' in tkinter here
 import copy
 
+## todo
+# Menu
+# ai timer
+# Suggest move in 2 player mode
+# Euristic think
+# Speed up
+
 # constants
 DEBUG_MODE = True
 LINE_NUMBER = 19	# do not change line number without changing center eval
@@ -22,13 +29,12 @@ WINDOW_LINE_WIDTH = 4
 WINDOW_LINE_COLOR = "black"
 WINDOW_WIDTH = GRID_START + GRID_SIZE + TEXT_START - GRID_END + TEXT_WIDTH + GRID_START
 WINDOW_HEIGHT = GRID_START + GRID_SIZE + GRID_START 
+BUTTON_START = GRID_END + (WINDOW_WIDTH - GRID_END) / 2
 PLAYER_1_COLOR = "black"
 PLAYER_2_COLOR = "white"
 PIECE_RADIUS = int(SQUARE_SIZE / 2.3)
-IA_DEPTH = 10
 MIN_VALUE = -100000
 MAX_VALUE = 100000
-PLAYER_NUMBER = 1
 PROXIMITY_MAX = 1
 COUNT_MAX = 3
 
@@ -38,8 +44,8 @@ def debug_log(message):
 	if DEBUG_MODE:
 		print(message)
 
-## IA functions
-def ia(score, grid, player, is_continue, continue_line, continue_column, depth):
+## ai functions
+def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	count = 0
 	alpha = MIN_VALUE - 1
 	beta = MAX_VALUE + 1
@@ -52,7 +58,7 @@ def ia(score, grid, player, is_continue, continue_line, continue_column, depth):
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not is_second_turn and not check_ia_move(grid, line, column)		\
+			if not is_second_turn and not check_ai_move(grid, line, column)		\
 			or is_second_turn and not check_proximity(grid, line, column):
 				column += 1
 				continue
@@ -63,10 +69,10 @@ def ia(score, grid, player, is_continue, continue_line, continue_column, depth):
 				elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
 					current_value = MIN_VALUE
 				elif check_alignment(grid, player, line, column):
-					current_value = ia_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
+					current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
 				elif count < COUNT_MAX:
 					count += 1
-					current_value = ia_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				else:
 					cancel_move(score, grid, player, line, column, eat)
 					column += 1
@@ -87,7 +93,7 @@ def ia(score, grid, player, is_continue, continue_line, continue_column, depth):
 	debug_log(alpha)
 	return max_line, max_column
 
-def ia_min(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
+def ai_min(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	min_value = MAX_VALUE + 1
 	line = 0
 	is_second_turn = False
@@ -96,27 +102,27 @@ def ia_min(score, grid, player, is_continue, continue_line, continue_column, dep
 
 	if depth == 0:
 		if is_continue:
-			return MAX_VALUE / 2 - (IA_DEPTH - depth)
+			return MAX_VALUE / 2 - (ai_depth - depth)
 		return heuristic(score, grid, player)
 
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not is_second_turn and not check_ia_move(grid, line, column)		\
+			if not is_second_turn and not check_ai_move(grid, line, column)		\
 			or is_second_turn and not check_proximity(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, other_player, line, column)
 			if move_success:
 				if score[other_player] >= 10:
-					current_value = MIN_VALUE + (IA_DEPTH - depth)
+					current_value = MIN_VALUE + (ai_depth - depth)
 				elif is_continue and check_alignment(grid, player, continue_line, continue_column):
-					current_value = MAX_VALUE - (IA_DEPTH - depth)
+					current_value = MAX_VALUE - (ai_depth - depth)
 				elif check_alignment(grid, other_player, line, column):
-					current_value = ia_max(score, grid, player, True, line, column, depth - 1, alpha, beta)
+					current_value = ai_max(score, grid, player, True, line, column, depth - 1, alpha, beta)
 				elif count < COUNT_MAX:
 					count += 1
-					current_value = ia_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+					current_value = ai_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				else:
 					cancel_move(score, grid, player, line, column, eat)
 					column += 1
@@ -136,7 +142,7 @@ def ia_min(score, grid, player, is_continue, continue_line, continue_column, dep
 
 	return beta
 
-def ia_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
+def ai_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	max_value = MIN_VALUE - 1
 	line = 0
 	is_second_turn = False
@@ -145,27 +151,27 @@ def ia_max(score, grid, player, is_continue, continue_line, continue_column, dep
 
 	if depth == 0:
 		if is_continue:
-			return MIN_VALUE / 2 + (IA_DEPTH - depth)
+			return MIN_VALUE / 2 + (ai_depth - depth)
 		return heuristic(score, grid, player)
 
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not is_second_turn and not check_ia_move(grid, line, column)		\
+			if not is_second_turn and not check_ai_move(grid, line, column)		\
 			or is_second_turn and not check_proximity(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, player, line, column)
 			if move_success:
 				if score[player] >= 10:
-					current_value = MAX_VALUE - (IA_DEPTH - depth)
+					current_value = MAX_VALUE - (ai_depth - depth)
 				elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
-					current_value = MIN_VALUE + (IA_DEPTH - depth)
+					current_value = MIN_VALUE + (ai_depth - depth)
 				elif check_alignment(grid, player, line, column):
-					current_value = ia_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
+					current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
 				elif count < COUNT_MAX:
 					count += 1;
-					current_value = ia_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				else:
 					cancel_move(score, grid, player, line, column, eat)
 					column += 1
@@ -185,18 +191,18 @@ def ia_max(score, grid, player, is_continue, continue_line, continue_column, dep
 
 	return alpha
 
-def check_ia_move(grid, line, column):
-	if check_ia_move_direction(grid, line, column, 0, 1):
+def check_ai_move(grid, line, column):
+	if check_ai_move_direction(grid, line, column, 0, 1):
 		return True
-	if check_ia_move_direction(grid, line, column, 1, 0):
+	if check_ai_move_direction(grid, line, column, 1, 0):
 		return True
-	if check_ia_move_direction(grid, line, column, 1, 1):
+	if check_ai_move_direction(grid, line, column, 1, 1):
 		return True
-	if check_ia_move_direction(grid, line, column, -1, 1):
+	if check_ai_move_direction(grid, line, column, -1, 1):
 		return True
 	return False
 
-def check_ia_move_direction(grid, line, column, direction_line, direction_column):
+def check_ai_move_direction(grid, line, column, direction_line, direction_column):
 	line_plus_one = line + direction_line
 	column_plus_one = column + direction_column
 	line_plus_two = line_plus_one + direction_line
@@ -213,9 +219,6 @@ def check_ia_move_direction(grid, line, column, direction_line, direction_column
 
 	return False
 
-
-
-	return False
 
 def check_proximity(grid, line, column):
 	if check_proximity_direction(grid, line, column, 0, 1):
@@ -242,7 +245,7 @@ def check_proximity_direction(grid, line, column, direction_line, direction_colu
 	current_column = column + direction_column
 	while i <= PROXIMITY_MAX										\
 	and current_line >= 0											\
-	and current_line < LINE_NUMBER                                                                          \
+	and current_line < LINE_NUMBER                                  \
 	and current_column >= 0											\
 	and current_column < LINE_NUMBER:
 		if grid[current_line][current_column] != 0:
@@ -350,9 +353,25 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 def left_click(event):
 	global game_window, player, score, grid, grid_canvas, is_game_finished, is_continue, continue_line, continue_column
 
-	if is_game_finished or (PLAYER_NUMBER == 1 and player == 2):
+	# check if the click was on a button
+	current = game_canvas.gettags(event.widget.find_withtag("current"))
+
+	if current != ():
+		if current[0] == "restart":
+			game_canvas.delete("all")
+			print_game()
+		elif current[0] == "ai_level":
+			game_canvas.delete("all")
+			print_ai_level()
+		elif current[0] == "menu":
+			game_canvas.delete("all")
+			print_menu()
+
+	# check if the game is finished
+	if is_game_finished or (player_number == 1 and player == 2):
 		return
 
+	# get click position
 	click_x = event.x
 	click_y = event.y
 	debug_log("click_x " + str(click_x) + " click_y " + str(click_y))
@@ -420,8 +439,8 @@ def left_click(event):
 	# change player for next move
 	player = 2 if player == 1 else 1
 
-	# if against ia, call ia
-	if PLAYER_NUMBER == 1:
+	# if against ai, call ai
+	if player_number == 1:
 		# check if game is finish
 		if is_game_finished:
 			return
@@ -429,8 +448,8 @@ def left_click(event):
 		# update Canvas
 		game_window.update()
 
-		# find ia move
-		line, column = ia(score, grid, player, is_continue, continue_line, continue_column, IA_DEPTH)
+		# find ai move
+		line, column = ai(score, grid, player, is_continue, continue_line, continue_column, ai_depth)
 		
 		# play the move
 		move_success, eat = play_move(True, score, grid, player, line, column)
@@ -466,6 +485,8 @@ def left_click(event):
 def player_win(player):
 	global is_game_finished, is_continue
 
+	if is_game_finished:
+		return
 	debug_log(str(PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR) + " win")
 	game_canvas.create_text(TEXT_START, GRID_START + GRID_SIZE / 2, anchor = W, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = str(PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR) + "\nwin !")
 	is_game_finished = True
@@ -648,7 +669,6 @@ def check_alignment(grid, player, line, column):
 	or check_alignment_direction(grid, player, line, column, 1, 0)						\
 	or check_alignment_direction(grid, player, line, column, 1, 1)						\
 	or check_alignment_direction(grid, player, line, column, 1, - 1):
-		# debug_log("alignment")
 		return True
 	return False
 	 
@@ -705,16 +725,135 @@ def check_continue(score, grid, player, line, column):
 
 	return False
 
+
+## ai_level
+def ai_level(event):
+	global ai_depth
+
+	current = game_canvas.gettags(event.widget.find_withtag("current"))
+
+	if current == ():
+		return
+	elif current[0].isdigit():
+		ai_depth = int(current[0])
+		debug_log("ai_depth: " + str(ai_depth))
+		game_canvas.delete("all")
+		print_game()
+	else:
+		return
+	
+
+def print_ai_level():
+	game_canvas.create_text(WINDOW_WIDTH / 2, 200, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 4, "bold"), text = "Chose AI level")
+
+	i = 1
+	shift_y = 0
+	while i <= 10:
+		shift_x = ((i - 1) % 5 - 2) * 75
+		if i == 6:
+			shift_y = 75
+		game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 30 + shift_x, 370 + shift_y, WINDOW_WIDTH /2 + 30 + shift_x, 430 + shift_y, width = 5, tags = str(i), fill = WINDOW_BACKGROUND_COLOR)
+		game_canvas.create_text(WINDOW_WIDTH / 2 + shift_x, 400 + shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = str(i), tags = str(i))
+		i += 1
+
+	game_canvas.bind("<Button-1>", ai_level)
+
+
+## menu
+def start(event):
+	global player_number
+
+	current = game_canvas.gettags(event.widget.find_withtag("current"))
+
+	if current == ():
+		return
+	elif current[0] == "start_ai":
+		player_number = 1
+		game_canvas.delete("all")
+		print_ai_level()
+	elif current[0] == "start_player":
+		player_number = 2
+		game_canvas.delete("all")
+		print_game()
+	else:
+		return
+	
+
+def print_menu():
+	game_canvas.create_text(WINDOW_WIDTH / 2, 200, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 5, "bold"), text = "Gomoku")
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 160, 370, WINDOW_WIDTH /2 + 160, 430, width = 5, tags = "start_ai", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 400, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Play against ai", tags = "start_ai")        
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 160, 470, WINDOW_WIDTH /2 + 160, 530, width = 5, tags = "start_player", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 500, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "2 Players", tags = "start_player")
+
+	game_canvas.bind("<Button-1>", start)
+
+
+## game
+def init_game():
+	global grid, grid_canvas, score, is_continue, is_game_finished
+
+	grid = [[0 for i in range(LINE_NUMBER)] for i in range(LINE_NUMBER)]
+	grid_canvas = [[0 for i in range(LINE_NUMBER)] for i in range(LINE_NUMBER)]
+	score = {1: 0, 2: 0}
+	is_continue = False
+	is_game_finished = False
+
+
+def print_game():
+	global player_1_score_text, player_2_score_text
+
+	# init game
+	init_game()
+
+	# board lines
+	i = 0
+	while i < LINE_NUMBER:
+		# verticle lines
+		game_canvas.create_line(GRID_START, GRID_START + i * SQUARE_SIZE, GRID_START + GRID_SIZE, GRID_START + i * SQUARE_SIZE, fill = WINDOW_LINE_COLOR, width = WINDOW_LINE_WIDTH)
+		# horizontal lines
+		game_canvas.create_line(GRID_START + i * SQUARE_SIZE, GRID_START, GRID_START + i * SQUARE_SIZE, GRID_START + GRID_SIZE, fill = WINDOW_LINE_COLOR, width = WINDOW_LINE_WIDTH)
+		i += 1
+
+	# scores
+	player_1_score_text = game_canvas.create_text(TEXT_START, GRID_START, anchor = NW, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_1_COLOR + "\nscore: 0")
+	player_2_score_text = game_canvas.create_text(TEXT_START, GRID_END, anchor = SW, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_2_COLOR + "\nscore: 0")
+
+	# buttons
+	base_shift_y = 135
+
+	game_canvas.create_rectangle(BUTTON_START - 50, GRID_START + base_shift_y - 15, BUTTON_START + 50, GRID_START + base_shift_y + 15, width = 5, tags = "restart", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(BUTTON_START, GRID_START + base_shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Restart", tags = "restart")
+
+	shift_y = 40
+	
+	game_canvas.create_rectangle(BUTTON_START - 50, GRID_START +base_shift_y - 15 + shift_y, BUTTON_START + 50, GRID_START + base_shift_y + 15 + shift_y, width = 5, tags = "ai_level", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(BUTTON_START, GRID_START + base_shift_y + shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "AI level", tags = "ai_level")
+
+	game_canvas.create_rectangle(BUTTON_START - 50, GRID_START + base_shift_y - 15 + 2 * shift_y, BUTTON_START + 50, GRID_START + base_shift_y + 15 + 2 * shift_y, width = 5, tags = "menu", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(BUTTON_START, GRID_START + base_shift_y + 2 * shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Menu", tags = "menu")
+
+	# call the click function on left click
+	game_canvas.bind("<Button-1>", left_click)
+
+
 ## Main ##
-# init game
+# init
 grid = [[0 for i in range(LINE_NUMBER)] for i in range(LINE_NUMBER)]
 grid_canvas = [[0 for i in range(LINE_NUMBER)] for i in range(LINE_NUMBER)]
 player = 1
 score = {1: 0, 2: 0}
-is_continue = True
+is_continue = False
 continue_line = 0
 continue_column = 0
 is_game_finished = False
+game_canvas = 0
+player_1_score_text = 0
+player_2_score_text = 0
+player_number = 1
+ai_depth = 1
 
 # game_window
 game_window = Tk()
@@ -732,20 +871,6 @@ game_window.resizable(0,0)
 game_canvas = Canvas(game_window, width = WINDOW_WIDTH, height = WINDOW_HEIGHT, background = WINDOW_BACKGROUND_COLOR)
 game_canvas.pack()
 
-# call the click function on left click
-game_canvas.bind("<Button-1>", left_click)
-
-# board lines
-i = 0
-while i < LINE_NUMBER:
-	# verticle lines
-	game_canvas.create_line(GRID_START, GRID_START + i * SQUARE_SIZE, GRID_START + GRID_SIZE, GRID_START + i * SQUARE_SIZE, fill = WINDOW_LINE_COLOR, width = WINDOW_LINE_WIDTH)
-	# horizontal lines
-	game_canvas.create_line(GRID_START + i * SQUARE_SIZE, GRID_START, GRID_START + i * SQUARE_SIZE, GRID_START + GRID_SIZE, fill = WINDOW_LINE_COLOR, width = WINDOW_LINE_WIDTH)
-	i += 1
-
-# scores
-player_1_score_text = game_canvas.create_text(TEXT_START, GRID_START, anchor = NW, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_1_COLOR + "\nscore: 0")
-player_2_score_text = game_canvas.create_text(TEXT_START, GRID_END, anchor = SW, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_2_COLOR + "\nscore: 0")
+print_menu()
 
 game_window.mainloop()
