@@ -55,123 +55,133 @@ def print_grid (grid):
 
 
 ## ai functions
+def get_move_list(grid):
+	move_list = []
+	i = 0
+	while i < LINE_NUMBER:
+		j = 0
+		while j < LINE_NUMBER:
+			if grid[i][j] != 0:
+				move_list.append((i - 1, j - 1))
+				move_list.append((i - 1, j))
+				move_list.append((i, j - 1))
+				move_list.append((i - 1, j + 1))
+				move_list.append((i + 1, j - 1))
+				move_list.append((i + 1, j + 1))
+				move_list.append((i + 1, j))
+				move_list.append((i, j + 1))
+			j += 1
+		i += 1
+
+	return list(set(move_list))
+
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	alpha = MIN_VALUE - 1
 	beta = MAX_VALUE + 1
 	max_line = 0
 	max_column = 0
-	line = 0
-	move_found = False
 	other_player = 2 if player == 1 else 1
+	first_move = True
 
-	while line < LINE_NUMBER:
-		column = 0
-		while column < LINE_NUMBER:
-			if not move_found and not check_proximity(grid, line, column)		\
-			or move_found and not check_ai_move(grid, line, column):
-				column += 1
-				continue
-			move_success, eat = play_move(False, score, grid, player, line, column)
-			if move_success:
-				move_found = True
-				if score[player] >= 10:
-					current_value = MAX_VALUE
-				elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
-					current_value = MIN_VALUE
-				elif check_alignment(grid, player, line, column):
-					current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				else:
-					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
-				if current_value > alpha:
-					alpha = current_value
-					max_line = line
-					max_column = column
-				cancel_move(score, grid, player, line, column, eat)
-			column += 1
-		line += 1
+	move_list = get_move_list(grid)
+	for move in move_list:
+		line = move[0]
+		column = move[1]
+		if not first_move and not check_ai_move(grid, line, column):
+			continue
+		move_success, eat = play_move(False, score, grid, player, line, column)
+		if move_success:
+			first_move = False
+			if score[player] >= 10:
+				current_value = MAX_VALUE
+			elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
+				current_value = MIN_VALUE
+			elif check_alignment(grid, player, line, column):
+				current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
+			else:
+				current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+			if current_value > alpha:
+				alpha = current_value
+				max_line = line
+				max_column = column
+			cancel_move(score, grid, player, line, column, eat)
 
 	debug_log(alpha)
 	return max_line, max_column
 
 def ai_min(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	min_value = MAX_VALUE + 1
-	line = 0
-	move_found = False
 	other_player = 2 if player == 1 else 1
+	first_move = True
 
 	if depth == 0:
 		if is_continue:
 			return MAX_VALUE / 2 - (ai_depth - depth)
 		return heuristic(score, grid, player)
 
-	while line < LINE_NUMBER:
-		column = 0
-		while column < LINE_NUMBER:
-			if not move_found and not check_proximity(grid, line, column)		\
-			or move_found and not check_ai_move(grid, line, column):
-				column += 1
-				continue
-			move_success, eat = play_move(False, score, grid, other_player, line, column)
-			if move_success:
-				move_found = True
-				if score[other_player] >= 10:
-					current_value = MIN_VALUE + (ai_depth - depth)
-				elif is_continue and check_alignment(grid, player, continue_line, continue_column):
-					current_value = MAX_VALUE - (ai_depth - depth)
-				elif check_alignment(grid, other_player, line, column):
-					current_value = ai_max(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				else:
-					current_value = ai_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
-				min_value = min(current_value, min_value)
-				cancel_move(score, grid, other_player, line, column, eat)
-				if alpha >= min_value:
-					return min_value
-				beta = min(min_value, beta)
-			column += 1
-		line += 1
+	move_list = get_move_list(grid)
+	for move in move_list:
+		line = move[0]
+		column = move[1]
+		if not first_move and not check_ai_move(grid, line, column):
+			continue
+		move_success, eat = play_move(False, score, grid, other_player, line, column)
+		if move_success:
+			first_move = False
+			if score[other_player] >= 10:
+				current_value = MIN_VALUE + (ai_depth - depth)
+			elif is_continue and check_alignment(grid, player, continue_line, continue_column):
+				current_value = MAX_VALUE - (ai_depth - depth)
+			elif check_alignment(grid, other_player, line, column):
+				current_value = ai_max(score, grid, player, True, line, column, depth - 1, alpha, beta)
+			else:
+				current_value = ai_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+			min_value = min(current_value, min_value)
+			cancel_move(score, grid, other_player, line, column, eat)
+			if alpha >= min_value:
+				return min_value
+			beta = min(min_value, beta)
 
 	return min_value
 
 def ai_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	max_value = MIN_VALUE - 1
-	line = 0
-	move_found = False
 	other_player = 2 if player == 1 else 1
+	first_move = True
 
 	if depth == 0:
 		if is_continue:
 			return MIN_VALUE / 2 + (ai_depth - depth)
 		return heuristic(score, grid, player)
 
-	while line < LINE_NUMBER:
-		column = 0
-		while column < LINE_NUMBER:
-			if not move_found and not check_proximity(grid, line, column)		\
-			or move_found and not check_ai_move(grid, line, column):
-				column += 1
-				continue
-			move_success, eat = play_move(False, score, grid, player, line, column)
-			if move_success:
-				move_found = True
-				if score[player] >= 10:
-					current_value = MAX_VALUE - (ai_depth - depth)
-				elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
-					current_value = MIN_VALUE + (ai_depth - depth)
-				elif check_alignment(grid, player, line, column):
-					current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				else:
-					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
-				max_value = max(current_value, max_value)
-				cancel_move(score, grid, player, line, column, eat)
-				if beta <= max_value:
-					return max_value
-				alpha = max(max_value, alpha)
-			column += 1
-		line += 1
+	move_list = get_move_list(grid)
+	for move in move_list:
+		line = move[0]
+		column = move[1]
+		if not first_move and not check_ai_move(grid, line, column):
+			continue
+		move_success, eat = play_move(False, score, grid, player, line, column)
+		if move_success:
+			first_move = False
+			if score[player] >= 10:
+				current_value = MAX_VALUE - (ai_depth - depth)
+			elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
+				current_value = MIN_VALUE + (ai_depth - depth)
+			elif check_alignment(grid, player, line, column):
+				current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
+			else:
+				current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+			max_value = max(current_value, max_value)
+			cancel_move(score, grid, player, line, column, eat)
+			if beta <= max_value:
+				return max_value
+			alpha = max(max_value, alpha)
 
 	return max_value
 
 def check_ai_move(grid, line, column):
+	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER:
+		return False
 	if check_ai_move_direction(grid, line, column, 0, 1):
 		return True
 	if check_ai_move_direction(grid, line, column, 1, 0):
@@ -479,8 +489,7 @@ def player_win(player):
 
 def play_move(update_canvas, score, grid, player, line, column):
 	# check if the move can be played
-	if grid[line][column] != 0:
-		# debug_log("there is already a piece here")
+	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER or grid[line][column] != 0:
 		return False, 0
 
 	# create piece
