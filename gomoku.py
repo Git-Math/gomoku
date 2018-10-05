@@ -8,7 +8,6 @@ import copy
 import time
 
 ## todo
-# undo ai bug
 # Suggest move in 2 player mode
 # Euristic think
 # Speed up
@@ -57,7 +56,6 @@ def print_grid (grid):
 
 ## ai functions
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
-	count = 0
 	alpha = MIN_VALUE - 1
 	beta = MAX_VALUE + 1
 	max_line = 0
@@ -81,13 +79,8 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 					current_value = MIN_VALUE
 				elif check_alignment(grid, player, line, column):
 					current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				elif count < COUNT_MAX:
-					count += 1
-					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				else:
-					cancel_move(score, grid, player, line, column, eat)
-					column += 1
-					continue
+					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				if current_value > alpha:
 					alpha = current_value
 					max_line = line
@@ -109,7 +102,6 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 	line = 0
 	is_second_turn = False
 	other_player = 2 if player == 1 else 1
-	count = 0
 
 	if depth == 0:
 		if is_continue:
@@ -131,17 +123,12 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 					current_value = MAX_VALUE - (ai_depth - depth)
 				elif check_alignment(grid, other_player, line, column):
 					current_value = ai_max(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				elif count < COUNT_MAX:
-					count += 1
-					current_value = ai_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				else:
-					cancel_move(score, grid, player, line, column, eat)
-					column += 1
-					continue
+					current_value = ai_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				min_value = min(current_value, min_value)
 				cancel_move(score, grid, other_player, line, column, eat)
-				if alpha >= current_value:
-					return current_value
+				if alpha >= min_value:
+					return min_value
 				beta = min(min_value, beta)
 			column += 1
 		line += 1
@@ -151,14 +138,13 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 			column = 0
 			is_second_turn = True
 
-	return beta
+	return min_value
 
 def ai_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	max_value = MIN_VALUE - 1
 	line = 0
 	is_second_turn = False
 	other_player = 2 if player == 1 else 1
-	count = 0
 
 	if depth == 0:
 		if is_continue:
@@ -180,17 +166,12 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 					current_value = MIN_VALUE + (ai_depth - depth)
 				elif check_alignment(grid, player, line, column):
 					current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
-				elif count < COUNT_MAX:
-					count += 1;
-					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				else:
-					cancel_move(score, grid, player, line, column, eat)
-					column += 1
-					continue
+					current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 				max_value = max(current_value, max_value)
 				cancel_move(score, grid, player, line, column, eat)
-				if beta <= current_value:
-					return current_value
+				if beta <= max_value:
+					return max_value
 				alpha = max(max_value, alpha)
 			column += 1
 		line += 1
@@ -200,7 +181,7 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 			column = 0
 			is_second_turn = True
 
-	return alpha
+	return max_value
 
 def check_ai_move(grid, line, column):
 	if check_ai_move_direction(grid, line, column, 0, 1):
