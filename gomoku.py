@@ -10,7 +10,8 @@ import time
 ## todo
 # Suggest move in 2 player mode
 # Euristic think
-# Speed up
+# Speed up	ideas : func to search move only close to pieces / only keep best moves ?
+# min/max in one func ?
 # bonus ?
 
 # constants
@@ -35,7 +36,6 @@ PIECE_RADIUS = int(SQUARE_SIZE / 2.3)
 MIN_VALUE = -100000
 MAX_VALUE = 100000
 PROXIMITY_MAX = 1
-COUNT_MAX = 3
 
 
 # function used for debug log
@@ -61,18 +61,19 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	max_line = 0
 	max_column = 0
 	line = 0
-	is_second_turn = False
+	move_found = False
 	other_player = 2 if player == 1 else 1
 
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not is_second_turn and not check_ai_move(grid, line, column)		\
-			or is_second_turn and not check_proximity(grid, line, column):
+			if not move_found and not check_proximity(grid, line, column)		\
+			or move_found and not check_ai_move(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, player, line, column)
 			if move_success:
+				move_found = True
 				if score[player] >= 10:
 					current_value = MAX_VALUE
 				elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
@@ -88,11 +89,6 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 				cancel_move(score, grid, player, line, column, eat)
 			column += 1
 		line += 1
-		# if no possible move is found
-		if line == LINE_NUMBER and column == LINE_NUMBER and alpha == MIN_VALUE - 1:
-			line = 0
-			column = 0
-			is_second_turn = True
 
 	debug_log(alpha)
 	return max_line, max_column
@@ -100,7 +96,7 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 def ai_min(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	min_value = MAX_VALUE + 1
 	line = 0
-	is_second_turn = False
+	move_found = False
 	other_player = 2 if player == 1 else 1
 
 	if depth == 0:
@@ -111,12 +107,13 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not is_second_turn and not check_ai_move(grid, line, column)		\
-			or is_second_turn and not check_proximity(grid, line, column):
+			if not move_found and not check_proximity(grid, line, column)		\
+			or move_found and not check_ai_move(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, other_player, line, column)
 			if move_success:
+				move_found = True
 				if score[other_player] >= 10:
 					current_value = MIN_VALUE + (ai_depth - depth)
 				elif is_continue and check_alignment(grid, player, continue_line, continue_column):
@@ -132,18 +129,13 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 				beta = min(min_value, beta)
 			column += 1
 		line += 1
-		# if no possible move is found
-		if line == LINE_NUMBER and column == LINE_NUMBER and min_value == MAX_VALUE + 1:
-			line = 0
-			column = 0
-			is_second_turn = True
 
 	return min_value
 
 def ai_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	max_value = MIN_VALUE - 1
 	line = 0
-	is_second_turn = False
+	move_found = False
 	other_player = 2 if player == 1 else 1
 
 	if depth == 0:
@@ -154,12 +146,13 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 	while line < LINE_NUMBER:
 		column = 0
 		while column < LINE_NUMBER:
-			if not is_second_turn and not check_ai_move(grid, line, column)		\
-			or is_second_turn and not check_proximity(grid, line, column):
+			if not move_found and not check_proximity(grid, line, column)		\
+			or move_found and not check_ai_move(grid, line, column):
 				column += 1
 				continue
 			move_success, eat = play_move(False, score, grid, player, line, column)
 			if move_success:
+				move_found = True
 				if score[player] >= 10:
 					current_value = MAX_VALUE - (ai_depth - depth)
 				elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
@@ -175,11 +168,6 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 				alpha = max(max_value, alpha)
 			column += 1
 		line += 1
-		# if no possible move is found
-		if line == LINE_NUMBER and column == LINE_NUMBER and max_value == MIN_VALUE - 1:
-			line = 0
-			column = 0
-			is_second_turn = True
 
 	return max_value
 
