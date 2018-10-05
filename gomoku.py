@@ -5,13 +5,14 @@ except ImportError:
     # for Python3
     from tkinter import *   ## notice lowercase 't' in tkinter here
 import copy
+import time
 
 ## todo
-# Menu
-# ai timer
+# undo ai bug
 # Suggest move in 2 player mode
 # Euristic think
 # Speed up
+# bonus ?
 
 # constants
 DEBUG_MODE = True
@@ -20,16 +21,15 @@ SQUARE_SIZE = 37
 GRID_SIZE = (LINE_NUMBER - 1) * SQUARE_SIZE
 GRID_START = 50
 GRID_END = GRID_START + GRID_SIZE
-TEXT_START = GRID_END + 50
 TEXT_SIZE = 16
 TEXT_WIDTH = 100
 TEXT_FONT = "Helvetica"
-WINDOW_BACKGROUND_COLOR = "brown"
+WINDOW_BACKGROUND_COLOR = "sienna4"
 WINDOW_LINE_WIDTH = 4
 WINDOW_LINE_COLOR = "black"
-WINDOW_WIDTH = GRID_START + GRID_SIZE + TEXT_START - GRID_END + TEXT_WIDTH + GRID_START
+WINDOW_WIDTH = GRID_START + GRID_SIZE + 50 + TEXT_WIDTH + GRID_START
 WINDOW_HEIGHT = GRID_START + GRID_SIZE + GRID_START 
-BUTTON_START = GRID_END + (WINDOW_WIDTH - GRID_END) / 2
+TEXT_START = GRID_END + (WINDOW_WIDTH - GRID_END) / 2
 PLAYER_1_COLOR = "black"
 PLAYER_2_COLOR = "white"
 PIECE_RADIUS = int(SQUARE_SIZE / 2.3)
@@ -43,6 +43,17 @@ COUNT_MAX = 3
 def debug_log(message):
 	if DEBUG_MODE:
 		print(message)
+
+def print_grid (grid):
+	i = 0
+	while i < LINE_NUMBER:
+		j = 0
+		while j < LINE_NUMBER:
+			print(str(grid[i][j]) + " ", end = "")
+			j += 1
+		i += 1
+		print("")	
+
 
 ## ai functions
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
@@ -395,6 +406,8 @@ def left_click(event):
 		return
 	debug_log("column " + str(column))
 
+	#print_grid(grid)
+
 	# check clic_y
 	if (click_y - GRID_START) % SQUARE_SIZE <= PIECE_RADIUS or click_y < GRID_START:
 		# calc line
@@ -449,8 +462,11 @@ def left_click(event):
 		game_window.update()
 
 		# find ai move
+		start_time = time.time()
 		line, column = ai(score, grid, player, is_continue, continue_line, continue_column, ai_depth)
-		
+		end_time = time.time()
+		game_canvas.itemconfigure(ai_timer, text = "AI timer:\n" + str(int((end_time - start_time) * 1000)) + "ms")
+
 		# play the move
 		move_success, eat = play_move(True, score, grid, player, line, column)
 		if not move_success:
@@ -488,7 +504,7 @@ def player_win(player):
 	if is_game_finished:
 		return
 	debug_log(str(PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR) + " win")
-	game_canvas.create_text(TEXT_START, GRID_START + GRID_SIZE / 2, anchor = W, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = str(PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR) + "\nwin !")
+	game_canvas.create_text(TEXT_START, GRID_START + GRID_SIZE / 2, anchor = CENTER, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = str(PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR) + "\nwin !")
 	is_game_finished = True
 	is_continue = False
 
@@ -793,17 +809,18 @@ def print_menu():
 
 ## game
 def init_game():
-	global grid, grid_canvas, score, is_continue, is_game_finished
+	global grid, grid_canvas, player, score, is_continue, is_game_finished
 
 	grid = [[0 for i in range(LINE_NUMBER)] for i in range(LINE_NUMBER)]
 	grid_canvas = [[0 for i in range(LINE_NUMBER)] for i in range(LINE_NUMBER)]
 	score = {1: 0, 2: 0}
+	player = 1
 	is_continue = False
 	is_game_finished = False
 
 
 def print_game():
-	global player_1_score_text, player_2_score_text
+	global player_1_score_text, player_2_score_text, ai_timer
 
 	# init game
 	init_game()
@@ -818,23 +835,31 @@ def print_game():
 		i += 1
 
 	# scores
-	player_1_score_text = game_canvas.create_text(TEXT_START, GRID_START, anchor = NW, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_1_COLOR + "\nscore: 0")
-	player_2_score_text = game_canvas.create_text(TEXT_START, GRID_END, anchor = SW, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_2_COLOR + "\nscore: 0")
+	player_1_score_text = game_canvas.create_text(TEXT_START, GRID_START, anchor = CENTER, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_1_COLOR + "\nscore: 0")
+	player_2_score_text = game_canvas.create_text(TEXT_START, GRID_END, anchor = CENTER, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = PLAYER_2_COLOR + "\nscore: 0")
 
 	# buttons
 	base_shift_y = 135
 
-	game_canvas.create_rectangle(BUTTON_START - 50, GRID_START + base_shift_y - 15, BUTTON_START + 50, GRID_START + base_shift_y + 15, width = 5, tags = "restart", fill = WINDOW_BACKGROUND_COLOR)
-	game_canvas.create_text(BUTTON_START, GRID_START + base_shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Restart", tags = "restart")
+	game_canvas.create_rectangle(TEXT_START - 50, GRID_START + base_shift_y - 15, TEXT_START + 50, GRID_START + base_shift_y + 15, width = 5, tags = "restart", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(TEXT_START, GRID_START + base_shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Restart", tags = "restart")
 
 	shift_y = 40
 	
-	game_canvas.create_rectangle(BUTTON_START - 50, GRID_START +base_shift_y - 15 + shift_y, BUTTON_START + 50, GRID_START + base_shift_y + 15 + shift_y, width = 5, tags = "ai_level", fill = WINDOW_BACKGROUND_COLOR)
-	game_canvas.create_text(BUTTON_START, GRID_START + base_shift_y + shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "AI level", tags = "ai_level")
+	game_canvas.create_rectangle(TEXT_START - 50, GRID_START + base_shift_y - 15 + shift_y, TEXT_START + 50, GRID_START + base_shift_y + 15 + shift_y, width = 5, tags = "ai_level", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(TEXT_START, GRID_START + base_shift_y + shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "AI level", tags = "ai_level")
 
-	game_canvas.create_rectangle(BUTTON_START - 50, GRID_START + base_shift_y - 15 + 2 * shift_y, BUTTON_START + 50, GRID_START + base_shift_y + 15 + 2 * shift_y, width = 5, tags = "menu", fill = WINDOW_BACKGROUND_COLOR)
-	game_canvas.create_text(BUTTON_START, GRID_START + base_shift_y + 2 * shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Menu", tags = "menu")
+	game_canvas.create_rectangle(TEXT_START - 50, GRID_START + base_shift_y - 15 + 2 * shift_y, TEXT_START + 50, GRID_START + base_shift_y + 15 + 2 * shift_y, width = 5, tags = "menu", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(TEXT_START, GRID_START + base_shift_y + 2 * shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Menu", tags = "menu")
 
+	# ai timer
+	if player_number == 1:
+		ai_timer = game_canvas.create_text(TEXT_START, GRID_END - base_shift_y - shift_y, anchor = CENTER, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = "AI timer:\n0ms")
+	else:
+		game_canvas.create_rectangle(TEXT_START - 50, GRID_END - base_shift_y - shift_y - 15, TEXT_START + 50, GRID_END - base_shift_y - shift_y + 15, width = 5, tags = "help", fill = WINDOW_BACKGROUND_COLOR)
+		game_canvas.create_text(TEXT_START, GRID_END - base_shift_y - shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Help", tags = "help")
+		
+	
 	# call the click function on left click
 	game_canvas.bind("<Button-1>", left_click)
 
@@ -854,6 +879,7 @@ player_1_score_text = 0
 player_2_score_text = 0
 player_number = 1
 ai_depth = 1
+ai_timer = 0
 
 # game_window
 game_window = Tk()
