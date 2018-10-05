@@ -10,7 +10,7 @@ import time
 ## todo
 # Suggest move in 2 player mode
 # Euristic think
-# Speed up	ideas : func to search move only close to pieces / only keep best moves ?
+# Speed up	ideas : only keep best moves ?
 # min/max in one func ?
 # bonus ?
 
@@ -350,12 +350,33 @@ def left_click(event):
 		if current[0] == "restart":
 			game_canvas.delete("all")
 			print_game()
+			return
 		elif current[0] == "ai_level":
 			game_canvas.delete("all")
 			print_ai_level()
+			return
 		elif current[0] == "menu":
 			game_canvas.delete("all")
 			print_menu()
+			return
+		elif current[0] == "help":
+			if is_game_finished:
+				return
+			# find help move
+			line, column = ai(score, grid, player, is_continue, continue_line, continue_column, 4)
+			# calc piece_center
+			piece_center_x = column * SQUARE_SIZE + GRID_START
+			piece_center_y = line * SQUARE_SIZE + GRID_START
+			debug_log("piece_center_x " + str(piece_center_x) + " piece_center_y " + str(piece_center_y))
+			# print piece
+			help_piece = game_canvas.create_oval(piece_center_x - PIECE_RADIUS, piece_center_y - PIECE_RADIUS, piece_center_x + PIECE_RADIUS, piece_center_y + PIECE_RADIUS, fill = PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR)
+			# update Canvas
+			game_window.update()
+			# wait
+			time.sleep(1)
+			# remove help piece
+			game_canvas.delete(help_piece)
+			return
 
 	# check if the game is finished
 	if is_game_finished or (player_number == 1 and player == 2):
@@ -830,13 +851,13 @@ def print_game():
 	game_canvas.create_rectangle(TEXT_START - 50, GRID_START + base_shift_y - 15 + 2 * shift_y, TEXT_START + 50, GRID_START + base_shift_y + 15 + 2 * shift_y, width = 5, tags = "menu", fill = WINDOW_BACKGROUND_COLOR)
 	game_canvas.create_text(TEXT_START, GRID_START + base_shift_y + 2 * shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Menu", tags = "menu")
 
+	game_canvas.create_rectangle(TEXT_START - 50, GRID_END - base_shift_y - shift_y - 15, TEXT_START + 50, GRID_END - base_shift_y - shift_y + 15, width = 5, tags = "help", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(TEXT_START, GRID_END - base_shift_y - shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Help", tags = "help")
+
 	# ai timer
 	if player_number == 1:
-		ai_timer = game_canvas.create_text(TEXT_START, GRID_END - base_shift_y - shift_y, anchor = CENTER, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = "AI timer:\n0ms")
-	else:
-		game_canvas.create_rectangle(TEXT_START - 50, GRID_END - base_shift_y - shift_y - 15, TEXT_START + 50, GRID_END - base_shift_y - shift_y + 15, width = 5, tags = "help", fill = WINDOW_BACKGROUND_COLOR)
-		game_canvas.create_text(TEXT_START, GRID_END - base_shift_y - shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Help", tags = "help")
-		
+		ai_timer = game_canvas.create_text(TEXT_START, GRID_END - 80, anchor = CENTER, font = (TEXT_FONT, TEXT_SIZE, "bold"), width = TEXT_WIDTH, text = "AI timer:\n0ms")
+			
 	
 	# call the click function on left click
 	game_canvas.bind("<Button-1>", left_click)
