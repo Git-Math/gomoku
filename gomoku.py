@@ -9,7 +9,7 @@ import time
 
 ## todo
 # Euristic think
-# Speed up	ideas : only keep best moves ?
+# Speed up
 # min/max in one func ?
 # bonus ?
 
@@ -61,11 +61,16 @@ def print_grid (grid):
 def move_power(grid, line, column, player, max_power):
 	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER or grid[line][column] != 0:
 		return ILLEGAL_MOVE
-	elif fast_check_eat(grid, player, line, column):
+	grid[line][column] = player
+	if check_double_three(grid, player, line, column):
+		grid[line][column] = 0
+		return ILLEGAL_MOVE
+	grid[line][column] = 0
+	if fast_check_eat(grid, player, line, column):
 		return TOP_MOVE
-	elif check_four(grid, line, column):
+	if check_four(grid, line, column):
 		return TOP_MOVE
-	elif max_power < TOP_MOVE and check_two(grid, line, column):
+	if max_power < TOP_MOVE and check_two(grid, line, column):
 		return GOOD_MOVE
 	return OK_MOVE
 
@@ -100,6 +105,11 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	and grid[line_plus_two][column_plus_two] == other_player	\
 	and grid[line_plus_three][column_plus_three] == player:
 		return True
+
+	if grid[line_plus_one][column_plus_one] == player		\
+	and grid[line_plus_two][column_plus_two] == player	\
+	and grid[line_plus_three][column_plus_three] == other_player:
+		return True
 	
 	return False
 
@@ -107,15 +117,15 @@ def check_four(grid, line, column):
 	if check_four_direction(grid, line, column, 0, 1)						\
 	or check_four_direction(grid, line, column, 1, 0)						\
 	or check_four_direction(grid, line, column, 1, 1)						\
-	or check_four_direction(grid, line, column, 1, - 1):
+	or check_four_direction(grid, line, column, -1, 1):
 		return True
 	return False
 	 
 def check_four_direction(grid, line, column, direction_line, direction_column):
 	max_alignment = 0
 	i = 1
-	current_line = line
-	current_column = column
+	current_line = line + direction_line
+	current_column = column + direction_column
 	while current_line >= 0											\
 	and current_line < LINE_NUMBER									\
 	and current_column >= 0											\
@@ -142,9 +152,9 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 		return True
 
 	max_alignment = 0
-	i = 0
-	current_line = line
-	current_column = column
+	i = 1
+	current_line = line + direction_line
+	current_column = column + direction_column
 	while current_line >= 0											\
 	and current_line < LINE_NUMBER									\
 	and current_column >= 0											\
@@ -275,7 +285,7 @@ def get_move_list(grid, player):
 			j += 1
 		i += 1
 
-	return list(set(move_list))
+	return list(set(move_list))[:3]
 
 
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
