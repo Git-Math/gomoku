@@ -59,13 +59,8 @@ def print_grid (grid):
 
 ## ai functions
 def move_power(grid, line, column, player, max_power):
-	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER or grid[line][column] != 0:
+	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER or grid[line][column] != 0 or check_double_three(grid, player, line, column):
 		return ILLEGAL_MOVE
-	grid[line][column] = player
-	if check_double_three(grid, player, line, column):
-		grid[line][column] = 0
-		return ILLEGAL_MOVE
-	grid[line][column] = 0
 	if fast_check_eat(grid, player, line, column):
 		return TOP_MOVE
 	if check_four(grid, line, column):
@@ -122,6 +117,7 @@ def check_four(grid, line, column):
 	return False
 	 
 def check_four_direction(grid, line, column, direction_line, direction_column):
+	empty_square = False
 	max_alignment = 0
 	i = 1
 	current_line = line + direction_line
@@ -135,6 +131,12 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 		i += 1
 		current_line += direction_line
 		current_column += direction_column
+	if current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 0:
+		empty_square = True
 	i = -1
 	current_line = line - direction_line
 	current_column = column - direction_column
@@ -147,10 +149,17 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 		i -= 1
 		current_line -= direction_line
 		current_column -= direction_column
+	if current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 0:
+		empty_square = True
 	
-	if max_alignment >= 4:
+	if max_alignment >= 4 or (max_alignment == 3 and empty_square):
 		return True
 
+	empty_square = False
 	max_alignment = 0
 	i = 1
 	current_line = line + direction_line
@@ -164,6 +173,12 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 		i += 1
 		current_line += direction_line
 		current_column += direction_column
+	if current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 0:
+		empty_square = True
 	i = -1
 	current_line = line - direction_line
 	current_column = column - direction_column
@@ -176,8 +191,14 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 		i -= 1
 		current_line -= direction_line
 		current_column -= direction_column
-	
-	if max_alignment >= 4:
+	if current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 0:
+		empty_square = True
+
+	if max_alignment >= 4 or (max_alignment == 3 and empty_square):
 		return True
 
 	return False
@@ -800,7 +821,7 @@ def check_double_three(grid, player, line, column):
 	if three_number >= 2:
 		return True
 	return False
-
+# .oooo o.ooo
 # possible three: .ooo.. ..ooo. .oo.o. .o.oo.
 def check_double_three_direction(grid, player, line, column, direction_line, direction_column):
 	# start one before
@@ -832,7 +853,10 @@ def check_double_three_direction(grid, player, line, column, direction_line, dir
 		while j < 4:
 			current_line += direction_line
 			current_column += direction_column
-			if grid[current_line][current_column] == 0:
+			if current_line == line and current_column == column:
+				j += 1
+				continue
+			elif grid[current_line][current_column] == 0:
 				if empty_square:
 					empty_square = False
 					break
