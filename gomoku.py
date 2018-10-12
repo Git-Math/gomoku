@@ -8,7 +8,6 @@ import copy
 import time
 
 ## todo
-# Suggest move in 2 player mode
 # Euristic think
 # Speed up	ideas : only keep best moves ?
 # min/max in one func ?
@@ -36,6 +35,10 @@ PIECE_RADIUS = int(SQUARE_SIZE / 2.3)
 MIN_VALUE = -100000
 MAX_VALUE = 100000
 PROXIMITY_MAX = 1
+ILLEGAL_MOVE = 0
+OK_MOVE = 1
+GOOD_MOVE = 2
+TOP_MOVE = 3
 
 
 # function used for debug log
@@ -55,25 +58,225 @@ def print_grid (grid):
 
 
 ## ai functions
-def get_move_list(grid):
+def move_power(grid, line, column, player, max_power):
+	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER or grid[line][column] != 0:
+		return ILLEGAL_MOVE
+	elif fast_check_eat(grid, player, line, column):
+		return TOP_MOVE
+	elif check_four(grid, line, column):
+		return TOP_MOVE
+	elif max_power < TOP_MOVE and check_two(grid, line, column):
+		return GOOD_MOVE
+	return OK_MOVE
+
+def fast_check_eat(grid, player, line, column):
+	if fast_check_eat_direction(grid, player, line, column, 0, 1)		\
+	or fast_check_eat_direction(grid, player, line, column, 1, 0)		\
+	or fast_check_eat_direction(grid, player, line, column, 1, 1)		\
+	or fast_check_eat_direction(grid, player, line, column, 0, -1)		\
+	or fast_check_eat_direction(grid, player, line, column, -1, 0)		\
+	or fast_check_eat_direction(grid, player, line, column, -1, -1)		\
+	or fast_check_eat_direction(grid, player, line, column, 1, - 1)		\
+	or fast_check_eat_direction(grid, player, line, column, -1, 1):
+		return True
+	return False
+
+def fast_check_eat_direction(grid, player, line, column, direction_line, direction_column):
+	line_plus_one = line + direction_line
+	column_plus_one = column + direction_column
+	line_plus_two = line_plus_one + direction_line
+	column_plus_two = column_plus_one + direction_column
+	line_plus_three = line_plus_two + direction_line
+	column_plus_three = column_plus_two + direction_column
+	
+	if line_plus_three < 0                                          \
+	or line_plus_three >= LINE_NUMBER                               \
+	or column_plus_three < 0                                        \
+	or column_plus_three >= LINE_NUMBER:
+		return False
+
+	other_player = 2 if player == 1 else 1
+	if grid[line_plus_one][column_plus_one] == other_player		\
+	and grid[line_plus_two][column_plus_two] == other_player	\
+	and grid[line_plus_three][column_plus_three] == player:
+		return True
+	
+	return False
+
+def check_four(grid, line, column):
+	if check_four_direction(grid, line, column, 0, 1)						\
+	or check_four_direction(grid, line, column, 1, 0)						\
+	or check_four_direction(grid, line, column, 1, 1)						\
+	or check_four_direction(grid, line, column, 1, - 1):
+		return True
+	return False
+	 
+def check_four_direction(grid, line, column, direction_line, direction_column):
+	max_alignment = 0
+	i = 1
+	current_line = line
+	current_column = column
+	while current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 1:
+		max_alignment += 1
+		i += 1
+		current_line += direction_line
+		current_column += direction_column
+	i = -1
+	current_line = line - direction_line
+	current_column = column - direction_column
+	while current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 1:
+		max_alignment += 1
+		i -= 1
+		current_line -= direction_line
+		current_column -= direction_column
+	
+	if max_alignment >= 4:
+		return True
+
+	max_alignment = 0
+	i = 0
+	current_line = line
+	current_column = column
+	while current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 2:
+		max_alignment += 1
+		i += 1
+		current_line += direction_line
+		current_column += direction_column
+	i = -1
+	current_line = line - direction_line
+	current_column = column - direction_column
+	while current_line >= 0											\
+	and current_line < LINE_NUMBER									\
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == 2:
+		max_alignment += 1
+		i -= 1
+		current_line -= direction_line
+		current_column -= direction_column
+	
+	if max_alignment >= 4:
+		return True
+
+	return False
+
+def check_two(grid, line, column):
+	if cheat_two_direction(grid, line, column, 0, 1):
+		return True
+	if cheat_two_direction(grid, line, column, 1, 0):
+		return True
+	if cheat_two_direction(grid, line, column, 1, 1):
+		return True
+	if cheat_two_direction(grid, line, column, -1, 1):
+		return True
+	return False
+
+def cheat_two_direction(grid, line, column, direction_line, direction_column):
+	line_plus_one = line + direction_line
+	column_plus_one = column + direction_column
+	line_plus_two = line_plus_one + direction_line
+	column_plus_two = column_plus_one + direction_column
+	line_minus_one = line - direction_line
+	column_minus_one = column - direction_column
+	line_minus_two = line_minus_one - direction_line
+	column_minus_two = column_minus_one - direction_column
+
+	if line_minus_two >= 0 and line_minus_two < LINE_NUMBER and column_minus_two >= 0 and column_minus_two < LINE_NUMBER and grid[line_minus_one][column_minus_one] != 0 and grid[line_minus_one][column_minus_one] == grid[line_minus_two][column_minus_two]		\
+	or line_plus_two >= 0 and line_plus_two < LINE_NUMBER and column_plus_two >= 0 and column_plus_two < LINE_NUMBER and grid[line_plus_one][column_plus_one] != 0 and grid[line_plus_one][column_plus_one] == grid[line_plus_two][column_plus_two]					\
+	or line_minus_one >= 0 and line_minus_one < LINE_NUMBER and column_minus_one >= 0 and column_minus_one < LINE_NUMBER and line_plus_one >= 0 and line_plus_one < LINE_NUMBER and column_plus_one >= 0 and column_plus_one < LINE_NUMBER and grid[line_minus_one][column_minus_one] != 0 and grid[line_minus_one][column_minus_one] == grid[line_plus_one][column_plus_one]:
+		return True
+
+	return False
+
+def get_move_list(grid, player):
+	max_power = OK_MOVE
 	move_list = []
+	
 	i = 0
 	while i < LINE_NUMBER:
 		j = 0
 		while j < LINE_NUMBER:
 			if grid[i][j] != 0:
-				move_list.append((i - 1, j - 1))
-				move_list.append((i - 1, j))
-				move_list.append((i, j - 1))
-				move_list.append((i - 1, j + 1))
-				move_list.append((i + 1, j - 1))
-				move_list.append((i + 1, j + 1))
-				move_list.append((i + 1, j))
-				move_list.append((i, j + 1))
+				power = move_power(grid, i - 1, j - 1, player, max_power)
+				if power == max_power:
+					move_list.append((i - 1, j - 1))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i - 1, j - 1))
+				
+				power = move_power(grid, i - 1, j, player, max_power)
+				if power == max_power:
+					move_list.append((i - 1, j))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i - 1, j))
+				
+				power = move_power(grid, i, j - 1, player, max_power)
+				if power == max_power:
+					move_list.append((i, j - 1))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i, j - 1))
+				
+				power = move_power(grid, i - 1, j + 1, player, max_power)
+				if power == max_power:
+					move_list.append((i - 1, j + 1))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i - 1, j + 1))
+				
+				power = move_power(grid, i + 1, j - 1, player, max_power)
+				if power == max_power:
+					move_list.append((i + 1, j - 1))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i + 1, j - 1))
+				
+				power = move_power(grid, i + 1, j + 1, player, max_power)
+				if power == max_power:
+					move_list.append((i + 1, j + 1))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i + 1, j + 1))
+				
+				power = move_power(grid, i + 1, j, player, max_power)
+				if power == max_power:
+					move_list.append((i + 1, j))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i + 1, j))
+				
+				power = move_power(grid, i, j + 1, player, max_power)
+				if power == max_power:
+					move_list.append((i, j + 1))
+				elif power > max_power:
+					max_power = power
+					move_list = []
+					move_list.append((i, j + 1))
 			j += 1
 		i += 1
 
 	return list(set(move_list))
+
 
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	alpha = MIN_VALUE - 1
@@ -81,17 +284,13 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	max_line = 0
 	max_column = 0
 	other_player = 2 if player == 1 else 1
-	first_move = True
 
-	move_list = get_move_list(grid)
+	move_list = get_move_list(grid, player)
 	for move in move_list:
 		line = move[0]
 		column = move[1]
-		if not first_move and not check_ai_move(grid, line, column):
-			continue
 		move_success, eat = play_move(False, score, grid, player, line, column)
 		if move_success:
-			first_move = False
 			if score[player] >= 10:
 				current_value = MAX_VALUE
 			elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
@@ -112,22 +311,18 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 def ai_min(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	min_value = MAX_VALUE + 1
 	other_player = 2 if player == 1 else 1
-	first_move = True
 
 	if depth == 0:
 		if is_continue:
 			return MAX_VALUE / 2 - (ai_depth - depth)
 		return heuristic(score, grid, player)
 
-	move_list = get_move_list(grid)
+	move_list = get_move_list(grid, other_player)
 	for move in move_list:
 		line = move[0]
 		column = move[1]
-		if not first_move and not check_ai_move(grid, line, column):
-			continue
 		move_success, eat = play_move(False, score, grid, other_player, line, column)
 		if move_success:
-			first_move = False
 			if score[other_player] >= 10:
 				current_value = MIN_VALUE + (ai_depth - depth)
 			elif is_continue and check_alignment(grid, player, continue_line, continue_column):
@@ -147,22 +342,18 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 def ai_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	max_value = MIN_VALUE - 1
 	other_player = 2 if player == 1 else 1
-	first_move = True
 
 	if depth == 0:
 		if is_continue:
 			return MIN_VALUE / 2 + (ai_depth - depth)
 		return heuristic(score, grid, player)
 
-	move_list = get_move_list(grid)
+	move_list = get_move_list(grid, player)
 	for move in move_list:
 		line = move[0]
 		column = move[1]
-		if not first_move and not check_ai_move(grid, line, column):
-			continue
 		move_success, eat = play_move(False, score, grid, player, line, column)
 		if move_success:
-			first_move = False
 			if score[player] >= 10:
 				current_value = MAX_VALUE - (ai_depth - depth)
 			elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
@@ -178,36 +369,6 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 			alpha = max(max_value, alpha)
 
 	return max_value
-
-def check_ai_move(grid, line, column):
-	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER:
-		return False
-	if check_ai_move_direction(grid, line, column, 0, 1):
-		return True
-	if check_ai_move_direction(grid, line, column, 1, 0):
-		return True
-	if check_ai_move_direction(grid, line, column, 1, 1):
-		return True
-	if check_ai_move_direction(grid, line, column, -1, 1):
-		return True
-	return False
-
-def check_ai_move_direction(grid, line, column, direction_line, direction_column):
-	line_plus_one = line + direction_line
-	column_plus_one = column + direction_column
-	line_plus_two = line_plus_one + direction_line
-	column_plus_two = column_plus_one + direction_column
-	line_minus_one = line - direction_line
-	column_minus_one = column - direction_column
-	line_minus_two = line_minus_one - direction_line
-	column_minus_two = column_minus_one - direction_column
-
-	if line_minus_two >= 0 and line_minus_two < LINE_NUMBER and column_minus_two >= 0 and column_minus_two < LINE_NUMBER and grid[line_minus_one][column_minus_one] != 0 and grid[line_minus_one][column_minus_one] == grid[line_minus_two][column_minus_two]		\
-	or line_plus_two >= 0 and line_plus_two < LINE_NUMBER and column_plus_two >= 0 and column_plus_two < LINE_NUMBER and grid[line_plus_one][column_plus_one] != 0 and grid[line_plus_one][column_plus_one] == grid[line_plus_two][column_plus_two]					\
-	or line_minus_one >= 0 and line_minus_one < LINE_NUMBER and column_minus_one >= 0 and column_minus_one < LINE_NUMBER and line_plus_one >= 0 and line_plus_one < LINE_NUMBER and column_plus_one >= 0 and column_plus_one < LINE_NUMBER and grid[line_minus_one][column_minus_one] != 0 and grid[line_minus_one][column_minus_one] == grid[line_plus_one][column_plus_one]:
-		return True
-
-	return False
 
 
 def check_proximity(grid, line, column):
