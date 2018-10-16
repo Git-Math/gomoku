@@ -10,6 +10,7 @@ import time
 ## todo
 # Speed up a little at high depth
 # bonus ?
+# get entire move list first
 
 # constants
 DEBUG_MODE = True
@@ -44,16 +45,6 @@ WIN_MOVE = 4
 def debug_log(message):
 	if DEBUG_MODE:
 		print(message)
-
-def print_grid (grid):
-	i = 0
-	while i < LINE_NUMBER:
-		j = 0
-		while j < LINE_NUMBER:
-			print(str(grid[i][j]) + " ", end = "")
-			j += 1
-		i += 1
-		print("")	
 
 
 ## ai functions
@@ -169,7 +160,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and grid[current_line][current_column] == 0:
 		empty_square = True
 	
-	if max_alignment >= 4:
+	if max_alignment == 4:
 		return WIN_MOVE
 	if max_alignment == 3 and empty_square:
 		good_move = True
@@ -213,7 +204,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and grid[current_line][current_column] == 0:
 		empty_square = True
 
-	if max_alignment >= 4:
+	if max_alignment == 4:
 		return WIN_MOVE
 	if max_alignment == 3 and empty_square:
 		good_move = True
@@ -249,7 +240,7 @@ def cheat_two_direction(grid, line, column, direction_line, direction_column):
 
 	return False
 
-def move_power(grid, line, column, player, win_eat):
+def move_power(grid, line, column, player, win_eat, is_continue):
 	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER or grid[line][column] != 0 or check_double_three(grid, player, line, column):
 		return ILLEGAL_MOVE
 	if fast_check_eat(grid, player, line, column):
@@ -257,6 +248,8 @@ def move_power(grid, line, column, player, win_eat):
 			return WIN_MOVE
 		else:
 			return TOP_MOVE
+	if is_continue:
+		return ILLEGAL_MOVE
 	four = check_four(grid, line, column)
 	if four != 0:
 		return four
@@ -264,7 +257,7 @@ def move_power(grid, line, column, player, win_eat):
 		return GOOD_MOVE
 	return OK_MOVE
 
-def get_move_list(grid, player, score):
+def get_move_list(grid, player, score, is_continue):
 	ok_move_list = []
 	good_move_list = []
 	top_move_list = []
@@ -279,7 +272,7 @@ def get_move_list(grid, player, score):
 				if not (i - 1, j - 1) in ok_move_list		\
 				and not (i - 1, j - 1) in good_move_list	\
 				and not (i - 1, j - 1) in top_move_list:
-					power = move_power(grid, i - 1, j - 1, player, win_eat)
+					power = move_power(grid, i - 1, j - 1, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i - 1, j - 1))
 					elif power == GOOD_MOVE:
@@ -292,7 +285,7 @@ def get_move_list(grid, player, score):
 				if not (i - 1, j) in ok_move_list		\
 				and not (i - 1, j) in good_move_list	\
 				and not (i - 1, j) in top_move_list:
-					power = move_power(grid, i - 1, j, player, win_eat)
+					power = move_power(grid, i - 1, j, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i - 1, j))
 					elif power == GOOD_MOVE:
@@ -305,7 +298,7 @@ def get_move_list(grid, player, score):
 				if not (i, j - 1) in ok_move_list		\
 				and not (i, j - 1) in good_move_list	\
 				and not (i, j - 1) in top_move_list:
-					power = move_power(grid, i, j - 1, player, win_eat)
+					power = move_power(grid, i, j - 1, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i, j - 1))
 					elif power == GOOD_MOVE:
@@ -318,7 +311,7 @@ def get_move_list(grid, player, score):
 				if not (i - 1, j + 1) in ok_move_list		\
 				and not (i - 1, j + 1) in good_move_list	\
 				and not (i - 1, j + 1) in top_move_list:
-					power = move_power(grid, i - 1, j + 1, player, win_eat)
+					power = move_power(grid, i - 1, j + 1, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i - 1, j + 1))
 					elif power == GOOD_MOVE:
@@ -331,7 +324,7 @@ def get_move_list(grid, player, score):
 				if not (i + 1, j - 1) in ok_move_list		\
 				and not (i + 1, j - 1) in good_move_list	\
 				and not (i + 1, j - 1) in top_move_list:
-					power = move_power(grid, i + 1, j - 1, player, win_eat)
+					power = move_power(grid, i + 1, j - 1, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i + 1, j - 1))
 					elif power == GOOD_MOVE:
@@ -344,7 +337,7 @@ def get_move_list(grid, player, score):
 				if not (i + 1, j + 1) in ok_move_list		\
 				and not (i + 1, j + 1) in good_move_list	\
 				and not (i + 1, j + 1) in top_move_list:
-					power = move_power(grid, i + 1, j + 1, player, win_eat)
+					power = move_power(grid, i + 1, j + 1, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i + 1, j + 1))
 					elif power == GOOD_MOVE:
@@ -357,7 +350,7 @@ def get_move_list(grid, player, score):
 				if not (i + 1, j) in ok_move_list		\
 				and not (i + 1, j) in good_move_list	\
 				and not (i + 1, j) in top_move_list:
-					power = move_power(grid, i + 1, j, player, win_eat)
+					power = move_power(grid, i + 1, j, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i + 1, j))
 					elif power == GOOD_MOVE:
@@ -370,7 +363,7 @@ def get_move_list(grid, player, score):
 				if not (i, j + 1) in ok_move_list		\
 				and not (i, j + 1) in good_move_list	\
 				and not (i, j + 1) in top_move_list:
-					power = move_power(grid, i, j + 1, player, win_eat)
+					power = move_power(grid, i, j + 1, player, win_eat, is_continue)
 					if power == OK_MOVE:
 						ok_move_list.append((i, j + 1))
 					elif power == GOOD_MOVE:
@@ -390,11 +383,11 @@ def get_move_list(grid, player, score):
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	alpha = MIN_VALUE - 1
 	beta = MAX_VALUE + 1
-	max_line = 0
-	max_column = 0
+	max_line = -1
+	max_column = -1
 	other_player = 2 if player == 1 else 1
 
-	move_list = get_move_list(grid, player, score[player])
+	move_list = get_move_list(grid, player, score[player], is_continue)
 	for move in move_list:
 		line = move[0]
 		column = move[1]
@@ -426,7 +419,7 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 			return MAX_VALUE / 2 - (ai_depth - depth)
 		return heuristic(score, grid, player)
 
-	move_list = get_move_list(grid, other_player, score[player])
+	move_list = get_move_list(grid, other_player, score[other_player], is_continue)
 	for move in move_list:
 		line = move[0]
 		column = move[1]
@@ -457,7 +450,7 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 			return MIN_VALUE / 2 + (ai_depth - depth)
 		return heuristic(score, grid, player)
 
-	move_list = get_move_list(grid, player, score[player])
+	move_list = get_move_list(grid, player, score[player], is_continue)
 	for move in move_list:
 		line = move[0]
 		column = move[1]
@@ -663,18 +656,31 @@ def left_click(event):
 		elif current[0] == "help":
 			if is_game_finished:
 				return
+			
 			# find help move
 			line, column = ai(score, grid, player, is_continue, continue_line, continue_column, 4)
+			if line == -1 and column == -1:
+				if grid[9][9] == 0:
+					line = 9
+					column = 9
+				else:
+					debug_log("no move found")
+					return
+			
 			# calc piece_center
 			piece_center_x = column * SQUARE_SIZE + GRID_START
 			piece_center_y = line * SQUARE_SIZE + GRID_START
 			debug_log("piece_center_x " + str(piece_center_x) + " piece_center_y " + str(piece_center_y))
+			
 			# print piece
 			help_piece = game_canvas.create_oval(piece_center_x - PIECE_RADIUS, piece_center_y - PIECE_RADIUS, piece_center_x + PIECE_RADIUS, piece_center_y + PIECE_RADIUS, fill = PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR)
+		
 			# update Canvas
 			game_window.update()
+		
 			# wait
 			time.sleep(1)
+			
 			# remove help piece
 			game_canvas.delete(help_piece)
 			return
@@ -767,6 +773,10 @@ def left_click(event):
 		line, column = ai(score, grid, player, is_continue, continue_line, continue_column, ai_depth)
 		end_time = time.time()
 		game_canvas.itemconfigure(ai_timer, text = "AI timer:\n" + str(int((end_time - start_time) * 1000)) + "ms")
+		if line == -1 and column == -1:
+			debug_log("no move found")
+			line = 0
+			column = 0
 
 		# play the move
 		move_success, eat = play_move(True, score, grid, player, line, column)
