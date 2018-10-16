@@ -241,8 +241,6 @@ def cheat_two_direction(grid, line, column, direction_line, direction_column):
 	return False
 
 def move_power(grid, line, column, player, win_eat, is_continue):
-	if line < 0 or column < 0 or line >= LINE_NUMBER or column >= LINE_NUMBER or grid[line][column] != 0 or check_double_three(grid, player, line, column):
-		return ILLEGAL_MOVE
 	if fast_check_eat(grid, player, line, column):
 		if win_eat:
 			return WIN_MOVE
@@ -258,6 +256,7 @@ def move_power(grid, line, column, player, win_eat, is_continue):
 	return OK_MOVE
 
 def get_move_list(grid, player, score, is_continue):
+	move_list = []
 	ok_move_list = []
 	good_move_list = []
 	top_move_list = []
@@ -269,115 +268,88 @@ def get_move_list(grid, player, score, is_continue):
 		j = 0
 		while j < LINE_NUMBER:
 			if grid[i][j] != 0:
-				if not (i - 1, j - 1) in ok_move_list		\
-				and not (i - 1, j - 1) in good_move_list	\
-				and not (i - 1, j - 1) in top_move_list:
-					power = move_power(grid, i - 1, j - 1, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i - 1, j - 1))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i - 1, j - 1))
-					elif power == TOP_MOVE:
-						top_move_list.append((i - 1, j - 1))
-					elif power == WIN_MOVE:
-						return [(i - 1, j - 1)]
+				line = i - 1
+				column = j - 1
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
+
+				line = i - 1
+				column = j
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
 				
-				if not (i - 1, j) in ok_move_list		\
-				and not (i - 1, j) in good_move_list	\
-				and not (i - 1, j) in top_move_list:
-					power = move_power(grid, i - 1, j, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i - 1, j))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i - 1, j))
-					elif power == TOP_MOVE:
-						top_move_list.append((i - 1, j))
-					elif power == WIN_MOVE:
-						return [(i - 1, j)]
-				
-				if not (i, j - 1) in ok_move_list		\
-				and not (i, j - 1) in good_move_list	\
-				and not (i, j - 1) in top_move_list:
-					power = move_power(grid, i, j - 1, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i, j - 1))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i, j - 1))
-					elif power == TOP_MOVE:
-						top_move_list.append((i, j - 1))
-					elif power == WIN_MOVE:
-						return [(i, j - 1)]
-				
-				if not (i - 1, j + 1) in ok_move_list		\
-				and not (i - 1, j + 1) in good_move_list	\
-				and not (i - 1, j + 1) in top_move_list:
-					power = move_power(grid, i - 1, j + 1, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i - 1, j + 1))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i - 1, j + 1))
-					elif power == TOP_MOVE:
-						top_move_list.append((i - 1, j + 1))
-					elif power == WIN_MOVE:
-						return [(i - 1, j + 1)]
-				
-				if not (i + 1, j - 1) in ok_move_list		\
-				and not (i + 1, j - 1) in good_move_list	\
-				and not (i + 1, j - 1) in top_move_list:
-					power = move_power(grid, i + 1, j - 1, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i + 1, j - 1))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i + 1, j - 1))
-					elif power == TOP_MOVE:
-						top_move_list.append((i + 1, j - 1))
-					elif power == WIN_MOVE:
-						return [(i + 1, j - 1)]
-				
-				if not (i + 1, j + 1) in ok_move_list		\
-				and not (i + 1, j + 1) in good_move_list	\
-				and not (i + 1, j + 1) in top_move_list:
-					power = move_power(grid, i + 1, j + 1, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i + 1, j + 1))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i + 1, j + 1))
-					elif power == TOP_MOVE:
-						top_move_list.append((i + 1, j + 1))
-					elif power == WIN_MOVE:
-						return [(i + 1, j + 1)]
-				
-				if not (i + 1, j) in ok_move_list		\
-				and not (i + 1, j) in good_move_list	\
-				and not (i + 1, j) in top_move_list:
-					power = move_power(grid, i + 1, j, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i + 1, j))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i + 1, j))
-					elif power == TOP_MOVE:
-						top_move_list.append((i + 1, j))
-					elif power == WIN_MOVE:
-						return [(i + 1, j)]
-				
-				if not (i, j + 1) in ok_move_list		\
-				and not (i, j + 1) in good_move_list	\
-				and not (i, j + 1) in top_move_list:
-					power = move_power(grid, i, j + 1, player, win_eat, is_continue)
-					if power == OK_MOVE:
-						ok_move_list.append((i, j + 1))
-					elif power == GOOD_MOVE:
-						good_move_list.append((i, j + 1))
-					elif power == TOP_MOVE:
-						top_move_list.append((i, j + 1))
-					elif power == WIN_MOVE:
-						return [(i, j + 1)]
+				line = i
+				column = j - 1
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
+					
+				line = i - 1
+				column = j + 1
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
+
+				line = i + 1
+				column = j - 1
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
+
+				line = i + 1
+				column = j + 1
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
+
+				line = i + 1
+				column = j
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
+
+				line = i
+				column = j + 1
+				if not (line, column) in move_list													\
+				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				and grid[line][column] == 0															\
+				and not check_double_three(grid, player, line, column):
+					move_list.append((line, column))
 			
 			j += 1
 		i += 1
 	
-	move_list = top_move_list + good_move_list + ok_move_list
-	return move_list[:ai_move_number]
+	for move in move_list:
+		line = move[0]
+		column = move[1]
+		power = move_power(grid, line, column, player, win_eat, is_continue)
+		if power == OK_MOVE:
+			ok_move_list.append((line, column))
+		elif power == GOOD_MOVE:
+			good_move_list.append((line, column))
+		elif power == TOP_MOVE:
+			top_move_list.append((line, column))
+		elif power == WIN_MOVE:
+			return [(line, column)]
+
+	ret_move_list = top_move_list + good_move_list + ok_move_list
+	return ret_move_list[:ai_move_number]
 
 
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
