@@ -88,28 +88,28 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	
 	return False
 
-def check_four(grid, line, column):
+def check_four(grid, line, column, player):
 	top_move = False
 
-	move_power = check_four_direction(grid, line, column, 0, 1)
+	move_power = check_four_direction(grid, line, column, 0, 1, player)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
 		top_move = True
 	
-	move_power = check_four_direction(grid, line, column, 1, 0)
+	move_power = check_four_direction(grid, line, column, 1, 0, player)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
 		top_move = True
 	
-	move_power = check_four_direction(grid, line, column, 1, 1)
+	move_power = check_four_direction(grid, line, column, 1, 1, player)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
 		top_move = True
 	
-	move_power = check_four_direction(grid, line, column, -1, 1)
+	move_power = check_four_direction(grid, line, column, -1, 1, player)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
@@ -119,9 +119,10 @@ def check_four(grid, line, column):
 		return TOP_MOVE
 	return 0
 	 
-def check_four_direction(grid, line, column, direction_line, direction_column):
+def check_four_direction(grid, line, column, direction_line, direction_column, player):
 	top_move = False
-	
+	other_player = 2 if player == 1 else 1
+
 	empty_square = False
 	max_alignment = 0
 	current_line = line + direction_line
@@ -130,7 +131,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_line < LINE_NUMBER									\
 	and current_column >= 0											\
 	and current_column < LINE_NUMBER								\
-	and grid[current_line][current_column] == 1:
+	and grid[current_line][current_column] == player:
 		max_alignment += 1
 		current_line += direction_line
 		current_column += direction_column
@@ -147,7 +148,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_line < LINE_NUMBER									\
 	and current_column >= 0											\
 	and current_column < LINE_NUMBER								\
-	and grid[current_line][current_column] == 1:
+	and grid[current_line][current_column] == player:
 		max_alignment += 1
 		current_line -= direction_line
 		current_column -= direction_column
@@ -171,7 +172,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_line < LINE_NUMBER									\
 	and current_column >= 0											\
 	and current_column < LINE_NUMBER								\
-	and grid[current_line][current_column] == 2:
+	and grid[current_line][current_column] == other_player:
 		max_alignment += 1
 		current_line += direction_line
 		current_column += direction_column
@@ -188,7 +189,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_line < LINE_NUMBER									\
 	and current_column >= 0											\
 	and current_column < LINE_NUMBER								\
-	and grid[current_line][current_column] == 2:
+	and grid[current_line][current_column] == other_player:
 		max_alignment += 1
 		current_line -= direction_line
 		current_column -= direction_column
@@ -199,9 +200,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and grid[current_line][current_column] == 0:
 		empty_square = True
 
-	if max_alignment == 4:
-		return WIN_MOVE
-	if max_alignment == 3 and empty_square:
+	if max_alignment == 4 or (max_alignment == 3 and empty_square):
 		top_move = True
 	if top_move:
 		return TOP_MOVE
@@ -243,7 +242,7 @@ def move_power(grid, line, column, player, win_eat, is_continue):
 			return TOP_MOVE
 	if is_continue:
 		return ILLEGAL_MOVE
-	four = check_four(grid, line, column)
+	four = check_four(grid, line, column, player)
 	if four != 0:
 		return four
 	if check_two(grid, line, column):
