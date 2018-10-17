@@ -88,42 +88,41 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	return False
 
 def check_four(grid, line, column):
-	good_move = False
+	top_move = False
 
 	move_power = check_four_direction(grid, line, column, 0, 1)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == GOOD_MOVE:
-		good_move = True
+	elif move_power == TOP_MOVE:
+		top_move = True
 	
 	move_power = check_four_direction(grid, line, column, 1, 0)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == GOOD_MOVE:
-		good_move = True
+	elif move_power == TOP_MOVE:
+		top_move = True
 	
 	move_power = check_four_direction(grid, line, column, 1, 1)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == GOOD_MOVE:
-		good_move = True
+	elif move_power == TOP_MOVE:
+		top_move = True
 	
 	move_power = check_four_direction(grid, line, column, -1, 1)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == GOOD_MOVE:
-		good_move = True
+	elif move_power == TOP_MOVE:
+		top_move = True
 	
-	if good_move:
-		return GOOD_MOVE
+	if top_move:
+		return TOP_MOVE
 	return 0
 	 
 def check_four_direction(grid, line, column, direction_line, direction_column):
-	good_move = False
+	top_move = False
 	
 	empty_square = False
 	max_alignment = 0
-	i = 1
 	current_line = line + direction_line
 	current_column = column + direction_column
 	while current_line >= 0											\
@@ -132,7 +131,6 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 1:
 		max_alignment += 1
-		i += 1
 		current_line += direction_line
 		current_column += direction_column
 	if current_line >= 0											\
@@ -141,7 +139,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 0:
 		empty_square = True
-	i = -1
+	
 	current_line = line - direction_line
 	current_column = column - direction_column
 	while current_line >= 0											\
@@ -150,7 +148,6 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 1:
 		max_alignment += 1
-		i -= 1
 		current_line -= direction_line
 		current_column -= direction_column
 	if current_line >= 0											\
@@ -163,11 +160,10 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	if max_alignment == 4:
 		return WIN_MOVE
 	if max_alignment == 3 and empty_square:
-		good_move = True
+		top_move = True
 
 	empty_square = False
 	max_alignment = 0
-	i = 1
 	current_line = line + direction_line
 	current_column = column + direction_column
 	while current_line >= 0											\
@@ -176,7 +172,6 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 2:
 		max_alignment += 1
-		i += 1
 		current_line += direction_line
 		current_column += direction_column
 	if current_line >= 0											\
@@ -185,7 +180,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 0:
 		empty_square = True
-	i = -1
+	
 	current_line = line - direction_line
 	current_column = column - direction_column
 	while current_line >= 0											\
@@ -194,7 +189,6 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 2:
 		max_alignment += 1
-		i -= 1
 		current_line -= direction_line
 		current_column -= direction_column
 	if current_line >= 0											\
@@ -207,9 +201,9 @@ def check_four_direction(grid, line, column, direction_line, direction_column):
 	if max_alignment == 4:
 		return WIN_MOVE
 	if max_alignment == 3 and empty_square:
-		good_move = True
-	if good_move:
-		return GOOD_MOVE
+		top_move = True
+	if top_move:
+		return TOP_MOVE
 	return 0
 
 def check_two(grid, line, column):
@@ -270,71 +264,64 @@ def get_move_list(grid, player, score, is_continue):
 			if grid[i][j] != 0:
 				line = i - 1
 				column = j - 1
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 
 				line = i - 1
 				column = j
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 				
 				line = i
 				column = j - 1
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 					
 				line = i - 1
 				column = j + 1
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 
 				line = i + 1
 				column = j - 1
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 
 				line = i + 1
 				column = j + 1
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 
 				line = i + 1
 				column = j
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 
 				line = i
 				column = j + 1
-				if not (line, column) in move_list													\
-				and line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
+				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and not check_double_three(grid, player, line, column):
 					move_list.append((line, column))
 			
 			j += 1
 		i += 1
-	
+
+	move_list = list(set(move_list))
 	for move in move_list:
 		line = move[0]
 		column = move[1]
