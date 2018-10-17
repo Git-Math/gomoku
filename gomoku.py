@@ -48,19 +48,19 @@ def debug_log(message):
 
 
 ## ai functions
-def fast_check_eat(grid, player, line, column):
-	if fast_check_eat_direction(grid, player, line, column, 0, 1)		\
-	or fast_check_eat_direction(grid, player, line, column, 1, 0)		\
-	or fast_check_eat_direction(grid, player, line, column, 1, 1)		\
-	or fast_check_eat_direction(grid, player, line, column, 0, -1)		\
-	or fast_check_eat_direction(grid, player, line, column, -1, 0)		\
-	or fast_check_eat_direction(grid, player, line, column, -1, -1)		\
-	or fast_check_eat_direction(grid, player, line, column, 1, - 1)		\
-	or fast_check_eat_direction(grid, player, line, column, -1, 1):
+def fast_check_eat(grid, player, line, column, win_eat, is_continue):
+	if fast_check_eat_direction(grid, player, line, column, 0, 1, win_eat, is_continue)		\
+	or fast_check_eat_direction(grid, player, line, column, 1, 0, win_eat, is_continue)		\
+	or fast_check_eat_direction(grid, player, line, column, 1, 1, win_eat, is_continue)		\
+	or fast_check_eat_direction(grid, player, line, column, 0, -1, win_eat, is_continue)	\
+	or fast_check_eat_direction(grid, player, line, column, -1, 0, win_eat, is_continue)	\
+	or fast_check_eat_direction(grid, player, line, column, -1, -1, win_eat, is_continue)	\
+	or fast_check_eat_direction(grid, player, line, column, 1, - 1, win_eat, is_continue)	\
+	or fast_check_eat_direction(grid, player, line, column, -1, 1, win_eat, is_continue):
 		return True
 	return False
 
-def fast_check_eat_direction(grid, player, line, column, direction_line, direction_column):
+def fast_check_eat_direction(grid, player, line, column, direction_line, direction_column, win_eat, is_continue):
 	line_plus_one = line + direction_line
 	column_plus_one = column + direction_column
 	line_plus_two = line_plus_one + direction_line
@@ -68,9 +68,9 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	line_plus_three = line_plus_two + direction_line
 	column_plus_three = column_plus_two + direction_column
 	
-	if line_plus_three < 0                                          \
-	or line_plus_three >= LINE_NUMBER                               \
-	or column_plus_three < 0                                        \
+	if line_plus_three < 0										\
+	or line_plus_three >= LINE_NUMBER							\
+	or column_plus_three < 0									\
 	or column_plus_three >= LINE_NUMBER:
 		return False
 
@@ -80,8 +80,9 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	and grid[line_plus_three][column_plus_three] == player:
 		return True
 
-	if grid[line_plus_one][column_plus_one] == player		\
-	and grid[line_plus_two][column_plus_two] == player	\
+	if not win_eat and not is_continue							\
+	and grid[line_plus_one][column_plus_one] == player			\
+	and grid[line_plus_two][column_plus_two] == player			\
 	and grid[line_plus_three][column_plus_three] == other_player:
 		return True
 	
@@ -235,7 +236,7 @@ def cheat_two_direction(grid, line, column, direction_line, direction_column):
 	return False
 
 def move_power(grid, line, column, player, win_eat, is_continue):
-	if fast_check_eat(grid, player, line, column):
+	if fast_check_eat(grid, player, line, column, win_eat, is_continue):
 		if win_eat:
 			return WIN_MOVE
 		else:
