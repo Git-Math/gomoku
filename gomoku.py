@@ -1,6 +1,6 @@
 try:
     # for Python2
-    from Tkinter import *   ## notice capitalized T in Tkinter 
+    from Tkinter import *   ## notice capitalized T in Tkinter
 except ImportError:
     # for Python3
     from tkinter import *   ## notice lowercase 't' in tkinter here
@@ -27,7 +27,7 @@ WINDOW_BACKGROUND_COLOR = "sienna4"
 WINDOW_LINE_WIDTH = 4
 WINDOW_LINE_COLOR = "black"
 WINDOW_WIDTH = GRID_START + GRID_SIZE + 50 + TEXT_WIDTH + GRID_START
-WINDOW_HEIGHT = GRID_START + GRID_SIZE + GRID_START 
+WINDOW_HEIGHT = GRID_START + GRID_SIZE + GRID_START
 TEXT_START = GRID_END + (WINDOW_WIDTH - GRID_END) / 2
 PLAYER_1_COLOR = "black"
 PLAYER_2_COLOR = "white"
@@ -68,7 +68,7 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	column_plus_two = column_plus_one + direction_column
 	line_plus_three = line_plus_two + direction_line
 	column_plus_three = column_plus_two + direction_column
-	
+
 	if line_plus_three < 0										\
 	or line_plus_three >= LINE_NUMBER							\
 	or column_plus_three < 0									\
@@ -86,7 +86,7 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	and grid[line_plus_two][column_plus_two] == player			\
 	and grid[line_plus_three][column_plus_three] == other_player:
 		return True
-	
+
 	return False
 
 def check_four(grid, line, column, player):
@@ -97,29 +97,29 @@ def check_four(grid, line, column, player):
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
 		top_move = True
-	
+
 	move_power = check_four_direction(grid, line, column, 1, 0, player)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
 		top_move = True
-	
+
 	move_power = check_four_direction(grid, line, column, 1, 1, player)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
 		top_move = True
-	
+
 	move_power = check_four_direction(grid, line, column, -1, 1, player)
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
 	elif move_power == TOP_MOVE:
 		top_move = True
-	
+
 	if top_move:
 		return TOP_MOVE
 	return 0
-	 
+
 def check_four_direction(grid, line, column, direction_line, direction_column, player):
 	top_move = False
 	other_player = 2 if player == 1 else 1
@@ -142,7 +142,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column, p
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 0:
 		empty_square = True
-	
+
 	current_line = line - direction_line
 	current_column = column - direction_column
 	while current_line >= 0											\
@@ -159,7 +159,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column, p
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 0:
 		empty_square = True
-	
+
 	if max_alignment == 4:
 		return WIN_MOVE
 	if max_alignment == 3 and empty_square:
@@ -183,7 +183,7 @@ def check_four_direction(grid, line, column, direction_line, direction_column, p
 	and current_column < LINE_NUMBER								\
 	and grid[current_line][current_column] == 0:
 		empty_square = True
-	
+
 	current_line = line - direction_line
 	current_column = column - direction_column
 	while current_line >= 0											\
@@ -256,7 +256,7 @@ def get_move_list(grid, player, score, is_continue, is_first):
 	good_move_list = []
 	top_move_list = []
 	win_eat = True if score == 8 else False
-		
+
 	i = 0
 	while i < LINE_NUMBER:
 		j = 0
@@ -275,14 +275,14 @@ def get_move_list(grid, player, score, is_continue, is_first):
 				and grid[line][column] == 0															\
 				and (not is_first or not check_double_three(grid, player, line, column)):
 					move_list.append((line, column))
-				
+
 				line = i
 				column = j - 1
 				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
 				and grid[line][column] == 0															\
 				and (not is_first or not check_double_three(grid, player, line, column)):
 					move_list.append((line, column))
-					
+
 				line = i - 1
 				column = j + 1
 				if line >= 0 and column >= 0 and line < LINE_NUMBER and column < LINE_NUMBER		\
@@ -317,7 +317,7 @@ def get_move_list(grid, player, score, is_continue, is_first):
 				and grid[line][column] == 0															\
 				and (not is_first or not check_double_three(grid, player, line, column)):
 					move_list.append((line, column))
-			
+
 			j += 1
 		i += 1
 
@@ -337,7 +337,6 @@ def get_move_list(grid, player, score, is_continue, is_first):
 
 	ret_move_list = top_move_list + good_move_list + ok_move_list
 	return ret_move_list[:ai_move_number]
-
 
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	alpha = MIN_VALUE - 1
@@ -431,7 +430,6 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 
 	return max_value
 
-
 def check_proximity(grid, line, column):
 	if check_proximity_direction(grid, line, column, 0, 1):
 		return True
@@ -467,7 +465,7 @@ def check_proximity_direction(grid, line, column, direction_line, direction_colu
 		current_column += direction_column
 
 	return False
-		
+
 def heuristic(score, grid, player):
 	line = 0
 	eval = 0
@@ -526,7 +524,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	line_minus_three = line_minus_two - direction_line
 	column_minus_three = column_minus_two - direction_column
 	eval = 0
-	
+
 	# add possible eat eval
 	if line_plus_three >= 0                                         \
 	and line_plus_three < LINE_NUMBER                               \
@@ -599,8 +597,6 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 
 	return eval
 
-
-
 ## game functions
 # function called on left click
 def left_click(event):
@@ -625,7 +621,7 @@ def left_click(event):
 		elif current[0] == "help":
 			if is_game_finished:
 				return
-			
+
 			# find help move
 			line, column = ai(score, grid, player, is_continue, continue_line, continue_column, ai_depth)
 			if line == -1 and column == -1:
@@ -635,20 +631,20 @@ def left_click(event):
 				else:
 					debug_log("no move found")
 					return
-			
+
 			# calc piece_center
 			piece_center_x = column * SQUARE_SIZE + GRID_START
 			piece_center_y = line * SQUARE_SIZE + GRID_START
-			
+
 			# print piece
 			help_piece = game_canvas.create_oval(piece_center_x - PIECE_RADIUS, piece_center_y - PIECE_RADIUS, piece_center_x + PIECE_RADIUS, piece_center_y + PIECE_RADIUS, fill = PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR)
-		
+
 			# update Canvas
 			game_window.update()
-		
+
 			# wait
 			time.sleep(1)
-			
+
 			# remove help piece
 			game_canvas.delete(help_piece)
 			return
@@ -729,7 +725,7 @@ def left_click(event):
 		# check if game is finish
 		if is_game_finished:
 			return
-		
+
 		# update Canvas
 		game_window.update()
 
@@ -831,7 +827,7 @@ def cancel_eat_direction(score, grid, player, line, column, direction_line, dire
 	score[player] -= 2
 	grid[line + direction_line][column + direction_column] = other_player
 	grid[line + 2 * direction_line][column + 2 * direction_column] = other_player
-	
+
 def check_eat(update_canvas, score, grid, player, line, column):
 	eat = 0
 	if check_eat_direction(update_canvas, score, grid, player, line, column, 0, 1):
@@ -861,7 +857,7 @@ def check_eat_direction(update_canvas, score, grid, player, line, column, direct
 	column_plus_two = column_plus_one + direction_column
 	line_plus_three = line_plus_two + direction_line
 	column_plus_three = column_plus_two + direction_column
-	
+
 	if line_plus_three < 0                                          \
 	or line_plus_three >= LINE_NUMBER                               \
 	or column_plus_three < 0                                        \
@@ -948,23 +944,23 @@ def check_double_three_direction(grid, player, line, column, direction_line, dir
 			elif grid[current_line][current_column] != player:
 				empty_square = False
 				break
-			
+
 			j += 1
 		if empty_square:
 			return True
-		
+
 		i += 1
-		
+
 	return False
 
-def check_alignment(grid, player, line, column):	
+def check_alignment(grid, player, line, column):
 	if check_alignment_direction(grid, player, line, column, 0, 1)						\
 	or check_alignment_direction(grid, player, line, column, 1, 0)						\
 	or check_alignment_direction(grid, player, line, column, 1, 1)						\
 	or check_alignment_direction(grid, player, line, column, 1, - 1):
 		return True
 	return False
-	 
+
 def check_alignment_direction(grid, player, line, column, direction_line, direction_column):
 	max_alignment = 0
 	i = 0
@@ -991,7 +987,7 @@ def check_alignment_direction(grid, player, line, column, direction_line, direct
 		i -= 1
 		current_line -= direction_line
 		current_column -= direction_column
-	
+
 	if max_alignment >= 5:
 		return True
 
@@ -1017,7 +1013,6 @@ def check_continue(score, grid, player, line, column):
 		current_line += 1
 
 	return False
-
 
 ## ai_level
 def ai_level(event):
@@ -1055,7 +1050,6 @@ def ai_level(event):
 		print_game()
 	else:
 		return
-	
 
 def print_ai_level():
 	game_canvas.create_text(WINDOW_WIDTH / 2, 200, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 4, "bold"), text = "Chose AI level")
@@ -1071,7 +1065,6 @@ def print_ai_level():
 		i += 1
 
 	game_canvas.bind("<Button-1>", ai_level)
-
 
 ## menu
 def start(event):
@@ -1097,19 +1090,17 @@ def start(event):
 		print_game()
 	else:
 		return
-	
 
 def print_menu():
 	game_canvas.create_text(WINDOW_WIDTH / 2, 200, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 5, "bold"), text = "Gomoku")
 
 	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 160, 370, WINDOW_WIDTH /2 + 160, 430, width = 5, tags = "start_ai", fill = WINDOW_BACKGROUND_COLOR)
-	game_canvas.create_text(WINDOW_WIDTH / 2, 400, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Play against ai", tags = "start_ai")        
+	game_canvas.create_text(WINDOW_WIDTH / 2, 400, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Play against ai", tags = "start_ai")
 
 	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 160, 470, WINDOW_WIDTH /2 + 160, 530, width = 5, tags = "start_player", fill = WINDOW_BACKGROUND_COLOR)
 	game_canvas.create_text(WINDOW_WIDTH / 2, 500, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "2 Players", tags = "start_player")
 
 	game_canvas.bind("<Button-1>", start)
-
 
 ## game
 def init_game():
@@ -1121,7 +1112,6 @@ def init_game():
 	player = 1
 	is_continue = False
 	is_game_finished = False
-
 
 def print_game():
 	global player_1_score_text, player_2_score_text, ai_timer, ai_first, player
@@ -1155,7 +1145,7 @@ def print_game():
 	game_canvas.create_text(TEXT_START, GRID_START + base_shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "Restart", tags = "restart")
 
 	shift_y = 40
-	
+
 	game_canvas.create_rectangle(TEXT_START - 50, GRID_START + base_shift_y - 15 + shift_y, TEXT_START + 50, GRID_START + base_shift_y + 15 + shift_y, width = 5, tags = "ai_level", fill = WINDOW_BACKGROUND_COLOR)
 	game_canvas.create_text(TEXT_START, GRID_START + base_shift_y + shift_y, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE, "bold"), text = "AI level", tags = "ai_level")
 
@@ -1173,23 +1163,22 @@ def print_game():
 			line = 9
 			column = 9
 			play_move(True, score, grid, player, line, column)
-			
+
 			# calc piece_center
 			piece_center_x = column * SQUARE_SIZE + GRID_START
 			piece_center_y = line * SQUARE_SIZE + GRID_START
-			
+
 			# print piece
 			grid_canvas[line][column] = game_canvas.create_oval(piece_center_x - PIECE_RADIUS, piece_center_y - PIECE_RADIUS, piece_center_x + PIECE_RADIUS, piece_center_y + PIECE_RADIUS, fill = PLAYER_1_COLOR if player == 1 else PLAYER_2_COLOR)
-		
+
 			# change player for next move
 			player = 2 if player == 1 else 1
 			ai_first = True
 		else:
 			ai_first = False
-	
+
 	# call the click function on left click
 	game_canvas.bind("<Button-1>", left_click)
-
 
 ## Main ##
 # debug opt
