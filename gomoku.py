@@ -469,7 +469,7 @@ def check_proximity_direction(grid, line, column, direction_line, direction_colu
 def heuristic(score, grid, player):
 	line = 0
 	eval = 0
-	w_score = 1024
+	w_score = 512
 	other_player = 2 if player == 1 else 1
 
 	# wins are check in min/max functions
@@ -486,8 +486,8 @@ def heuristic(score, grid, player):
 		line += 1
 
 	# add score eval
-	eval += score[player] * w_score * score[player] / 2
-	eval -= score[other_player] * w_score * score[other_player] / 2
+	eval += score[player] * w_score * score[player]
+	eval -= score[other_player] * w_score * score[other_player]
 
 	return eval
 
@@ -503,13 +503,10 @@ def eval_square(grid, player, line, column):
 
 def eval_square_direction(grid, player, line, column, direction_line, direction_column):
 	square_number = 1
-	freedom_before = False
-	freedom_after = False
-	freedom = 0
 	player_square_number = 1
-	w_center_eval = 1
-	w_bonus_square = 2
-	w_player_square_number = 0.1
+	space_before = 0
+	space_after = 0
+	broken = False
 	other_player = 2 if player == 1 else 1
 	line_plus_one = line + direction_line
 	column_plus_one = column + direction_column
@@ -533,7 +530,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	and	grid[line_plus_one][column_plus_one] == other_player		\
 	and grid[line_plus_two][column_plus_two] == other_player		\
 	and grid[line_plus_three][column_plus_three] == 0:
-		eval += 128 * (score[player] + 1)
+		eval += 1024 * (score[player] + 1)
 
 	if line_minus_three >= 0                                        \
 	and line_minus_three < LINE_NUMBER                              \
@@ -542,26 +539,28 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	and	grid[line_minus_one][column_minus_one] == other_player		\
 	and grid[line_minus_two][column_minus_two] == other_player		\
 	and grid[line_minus_three][column_minus_three] == 0:
-		eval += 128 * (score[player] + 1)
+		eval += 1024 * (score[player] + 1)
 
 	# add center eval
-	eval += ((10 - abs(10 - (line + 1))) + (10 - abs(10 - (column + 1)))) * w_center_eval
+	eval += ((10 - abs(10 - (line + 1))) + (10 - abs(10 - (column + 1))))
 
 	i = -1
 	current_line = line - direction_line
 	current_column = column - direction_column
-	while i > -5												\
+	while i > -4												\
 	and current_line >= 0											\
 	and current_line < LINE_NUMBER										\
 	and current_column >= 0											\
 	and current_column < LINE_NUMBER									\
 	and grid[current_line][ current_column] != other_player:
-		if grid[current_line][ current_column] == player:
-			square_number += 1
+		if (space_before == 0 or (space_before == 1 and not broken)) and grid[current_line][ current_column] == player:
 			player_square_number += 1
+			if space_before == 1:
+				space_before = 0
+				broken = True
 		else:
-			square_number += 1
-			freedom_before = True
+			space_before += 1
+		square_number += 1
 		i -= 1
 		current_line -= direction_line
 		current_column -= direction_column
@@ -569,31 +568,50 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	i = 1
 	current_line = line + direction_line
 	current_column = column + direction_column
-	while i < 5												\
+	while i < 4												\
 	and current_line >= 0											\
 	and current_line < LINE_NUMBER										\
 	and current_column >= 0											\
 	and current_column < LINE_NUMBER									\
 	and grid[current_line][current_column] != other_player:
-		if grid[current_line][current_column] == player:
-			square_number += 1
+		if (space_after == 0 or (space_after == 1 and not broken)) and grid[current_line][ current_column] == player and player_square_number < 4:
 			player_square_number += 1
+			if space_after == 1:
+				space_after = 0
+				broken = True
 		else:
-			square_number += 1
-			freedom_after = True
+			space_after += 1
+		square_number += 1
 		i += 1
 		current_line += direction_line
 		current_column += direction_column
 
-	player_square_number = min(player_square_number, 4)
-	bonus_square = max(square_number - 5, -1)
-	if bonus_square < 0:
-		freedom = 0
-	elif bonus_square == 0 or not freedom_before or not freedom_after:
-		freedom = 1
+	if square_number < 5 or player_square_number < 2:
+		return eval
+	elif player_square_number == 2:
+		if space_before + space_after >= 4:
+			# straight two
+			eval +=	512
+		else:
+			# two
+			eval += 256
+	elif player_square_number == 3:
+		if space_before and space_after and space_before + space_after >= 3:
+			# straight three
+			eval += 4096
+		elif broken and space_before and space_after:
+			# broken three
+			eval += 2048
+		else:
+			# three
+			eval += 1024
 	else:
-		freedom = 2
-	eval += ((bonus_square + 1)  ** player_square_number) * w_bonus_square + (player_square_number ** player_square_number) * (10 ** freedom) * w_player_square_number
+		if space_before and space_after:
+			# straight four
+			eval += 16384
+		else:
+			# four
+			eval += 4096
 
 	return eval
 
@@ -631,7 +649,7 @@ def left_click(event):
 				else:
 					debug_log("no move found")
 					return
-
+			print(heuristic(score, grid, player))
 			# calc piece_center
 			piece_center_x = column * SQUARE_SIZE + GRID_START
 			piece_center_y = line * SQUARE_SIZE + GRID_START
