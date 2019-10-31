@@ -36,10 +36,12 @@ MIN_VALUE = -1000000
 MAX_VALUE = 1000000
 PROXIMITY_MAX = 1
 ILLEGAL_MOVE = 0
-OK_MOVE = 1
-GOOD_MOVE = 2
-TOP_MOVE = 3
-WIN_MOVE = 4
+DEFAULT_MOVE = 1
+OK_MOVE = 2
+GOOD_MOVE = 3
+TOP_MOVE = 4
+SAVE_MOVE = 5
+WIN_MOVE = 6
 
 
 # function used for debug log
@@ -90,35 +92,25 @@ def fast_check_eat_direction(grid, player, line, column, direction_line, directi
 	return False
 
 def check_four(grid, line, column, player):
-	top_move = False
+	move_power = 0
 
-	move_power = check_four_direction(grid, line, column, 0, 1, player)
+	move_power = max(move_power, check_four_direction(grid, line, column, 0, 1, player))
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == TOP_MOVE:
-		top_move = True
 
-	move_power = check_four_direction(grid, line, column, 1, 0, player)
+	move_power = max(move_power, check_four_direction(grid, line, column, 1, 0, player))
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == TOP_MOVE:
-		top_move = True
 
-	move_power = check_four_direction(grid, line, column, 1, 1, player)
+	move_power = max(move_power, check_four_direction(grid, line, column, 1, 1, player))
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == TOP_MOVE:
-		top_move = True
 
-	move_power = check_four_direction(grid, line, column, -1, 1, player)
+	move_power = max(move_power, check_four_direction(grid, line, column, -1, 1, player))
 	if move_power == WIN_MOVE:
 		return WIN_MOVE
-	elif move_power == TOP_MOVE:
-		top_move = True
 
-	if top_move:
-		return TOP_MOVE
-	return 0
+	return move_power
 
 def check_four_direction(grid, line, column, direction_line, direction_column, player):
 	top_move = False
@@ -201,8 +193,10 @@ def check_four_direction(grid, line, column, direction_line, direction_column, p
 	and grid[current_line][current_column] == 0:
 		empty_square = True
 
-	if max_alignment == 4 or (max_alignment == 3 and empty_square):
-		top_move = True
+	if max_alignment == 4:
+		return SAVE_MOVE
+	elif max_alignment == 3 and empty_square:
+		return TOP_MOVE
 	if top_move:
 		return TOP_MOVE
 	return 0
@@ -235,6 +229,37 @@ def cheat_two_direction(grid, line, column, direction_line, direction_column):
 
 	return False
 
+def check_one(grid, line, column, player):
+	if check_one_direction(grid, line, column, 0, 1, player):
+		return True
+	if check_one_direction(grid, line, column, 1, 0, player):
+		return True
+	if check_one_direction(grid, line, column, 1, 1, player):
+		return True
+	if check_one_direction(grid, line, column, 0, -1, player):
+		return True
+	if check_one_direction(grid, line, column, -1, 0, player):
+		return True
+	if check_one_direction(grid, line, column, -1, -1, player):
+		return True
+	if check_one_direction(grid, line, column, 1, - 1, player):
+		return True
+	if check_one_direction(grid, line, column, -1, 1, player):
+		return True
+	return False
+
+def check_one_direction(grid, line, column, direction_line, direction_column, player):
+	current_line = line + direction_line
+	current_column = column + direction_column
+	if current_line >= 0											\
+	and current_line < LINE_NUMBER                                  \
+	and current_column >= 0											\
+	and current_column < LINE_NUMBER								\
+	and grid[current_line][current_column] == player:
+			return True
+
+	return False
+
 def move_power(grid, line, column, player, win_eat, is_continue):
 	if fast_check_eat(grid, player, line, column, win_eat, is_continue):
 		if win_eat:
@@ -248,15 +273,20 @@ def move_power(grid, line, column, player, win_eat, is_continue):
 		return four
 	if check_two(grid, line, column):
 		return GOOD_MOVE
-	return OK_MOVE
+	if check_one(grid, line, column, player):
+		return OK_MOVE
+	return DEFAULT_MOVE
 
 def get_move_list(grid, player, score, is_continue, is_first):
 	move_list = []
+	default_move_list = []
 	ok_move_list = []
 	good_move_list = []
 	top_move_list = []
+	save_move_list = []
 	win_eat = True if score == 8 else False
 
+	# get move near already placed stones
 	i = 0
 	while i < LINE_NUMBER:
 		j = 0
@@ -321,22 +351,37 @@ def get_move_list(grid, player, score, is_continue, is_first):
 			j += 1
 		i += 1
 
+	# fast move ranking
 	move_list = list(set(move_list))
 	for move in move_list:
 		line = move[0]
 		column = move[1]
 		power = move_power(grid, line, column, player, win_eat, is_continue)
-		if power == OK_MOVE:
+		if power == DEFAULT_MOVE:
+			default_move_list.append((line, column))
+		elif power == OK_MOVE:
 			ok_move_list.append((line, column))
 		elif power == GOOD_MOVE:
 			good_move_list.append((line, column))
 		elif power == TOP_MOVE:
 			top_move_list.append((line, column))
+		elif power == SAVE_MOVE:
+			save_move_list.append((line, column))
 		elif power == WIN_MOVE:
+			print("win", line, column)
 			return [(line, column)]
 
-	ret_move_list = top_move_list + good_move_list + ok_move_list
-	return ret_move_list[:ai_move_number]
+	if is_first:
+		print(save_move_list, top_move_list, good_move_list, ok_move_list)
+	if save_move_list:
+		return save_move_list[:ai_move_number]
+	if top_move_list:
+		return top_move_list[:ai_move_number]
+	if good_move_list:
+		return good_move_list[:ai_move_number]
+	if ok_move_list:
+		return ok_move_list[:ai_move_number]
+	return default_move_list[:ai_move_number]
 
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	alpha = MIN_VALUE - 1
@@ -530,7 +575,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	and	grid[line_plus_one][column_plus_one] == other_player		\
 	and grid[line_plus_two][column_plus_two] == other_player		\
 	and grid[line_plus_three][column_plus_three] == 0:
-		eval += 1024 * (score[player] + 1)
+		eval += 2048 * (score[player] + 1)
 
 	if line_minus_three >= 0                                        \
 	and line_minus_three < LINE_NUMBER                              \
@@ -539,7 +584,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	and	grid[line_minus_one][column_minus_one] == other_player		\
 	and grid[line_minus_two][column_minus_two] == other_player		\
 	and grid[line_minus_three][column_minus_three] == 0:
-		eval += 1024 * (score[player] + 1)
+		eval += 2048 * (score[player] + 1)
 
 	# add center eval
 	eval += ((10 - abs(10 - (line + 1))) + (10 - abs(10 - (column + 1))))
@@ -1100,9 +1145,9 @@ def start(event):
 		game_canvas.delete("all")
 		print_game()
 	elif current[0] == "start_player":
-		player_number = 5
-		ai_depth = 4
-		ai_move_number = 1000
+		player_number = 2
+		ai_depth = 5
+		ai_move_number = 4
 		debug_log("ai_depth: " + str(ai_depth))
 		game_canvas.delete("all")
 		print_game()
