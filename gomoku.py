@@ -42,6 +42,7 @@ GOOD_MOVE = 3
 TOP_MOVE = 4
 SAVE_MOVE = 5
 WIN_MOVE = 6
+DOUBLE_THREE = False
 
 
 # function used for debug log
@@ -953,6 +954,8 @@ def check_eat_direction(update_canvas, score, grid, player, line, column, direct
 	return False
 
 def check_double_three(grid, player, line, column):
+	if DOUBLE_THREE:
+		return False
 	three_number = 0
 	if check_double_three_direction(grid, player, line, column, 0, 1):
 		three_number += 1
@@ -1153,6 +1156,9 @@ def start(event):
 		debug_log("ai_depth: " + str(ai_depth))
 		game_canvas.delete("all")
 		print_game()
+	elif current[0] == "options":
+		game_canvas.delete("all")
+		print_options()
 	else:
 		return
 
@@ -1164,6 +1170,9 @@ def print_menu():
 
 	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 160, 470, WINDOW_WIDTH /2 + 160, 530, width = 5, tags = "start_player", fill = WINDOW_BACKGROUND_COLOR)
 	game_canvas.create_text(WINDOW_WIDTH / 2, 500, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "2 Players", tags = "start_player")
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 160, 570, WINDOW_WIDTH /2 + 160, 630, width = 5, tags = "options", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 600, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "options", tags = "options")
 
 	game_canvas.bind("<Button-1>", start)
 
@@ -1244,6 +1253,64 @@ def print_game():
 
 	# call the click function on left click
 	game_canvas.bind("<Button-1>", left_click)
+
+def options(event):
+	global PLAYER_1_COLOR, PLAYER_2_COLOR, DOUBLE_THREE
+
+	current = game_canvas.gettags(event.widget.find_withtag("current"))
+
+	if current == ():
+		return
+	elif current[0] == "Black/White":
+		PLAYER_1_COLOR = "black"
+		PLAYER_2_COLOR = "white"
+		game_canvas.delete("all")
+		print_menu()
+	elif current[0] == "Violet/Yellow":
+		PLAYER_1_COLOR = "violet"
+		PLAYER_2_COLOR = "yellow"
+		game_canvas.delete("all")
+		print_menu()
+	elif current[0] == "Green/Red":
+		PLAYER_1_COLOR = "green"
+		PLAYER_2_COLOR = "red"
+		game_canvas.delete("all")
+		print_menu()
+	elif current[0] == "Blue/Orange":
+		PLAYER_1_COLOR = "Blue"
+		PLAYER_2_COLOR = "Orange"
+		game_canvas.delete("all")
+		print_menu()
+	elif current[0] == "double_three":
+		DOUBLE_THREE = not DOUBLE_THREE
+		game_canvas.delete("all")
+		print_menu()
+	elif current[0] == "menu":
+		game_canvas.delete("all")
+		print_menu()
+	else:
+		return
+
+def print_options():
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 180, 100, WINDOW_WIDTH /2 + 180, 160, width = 5, tags = "Black/white", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 130, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Black/White", tags = "Black/White")
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 180, 200, WINDOW_WIDTH /2 + 180, 260, width = 5, tags = "Violet/Yellow", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 230, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Violet/Yellow", tags = "Violet/Yellow")
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 180, 300, WINDOW_WIDTH /2 + 180, 360, width = 5, tags = "Green/Red", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 330, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Green/Red", tags = "Green/Red")
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 180, 400, WINDOW_WIDTH /2 + 180, 460, width = 5, tags = "Blue/Orange", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 430, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Blue/Orange", tags = "Blue/Orange")
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 180, 500, WINDOW_WIDTH /2 + 180, 560, width = 5, tags = "double_three", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 530, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Double Three Off" if DOUBLE_THREE else "Double Three On", tags = "double_three")
+
+	game_canvas.create_rectangle(WINDOW_WIDTH / 2 - 180, 600, WINDOW_WIDTH /2 + 180, 660, width = 5, tags = "menu", fill = WINDOW_BACKGROUND_COLOR)
+	game_canvas.create_text(WINDOW_WIDTH / 2, 630, anchor = CENTER,  font = (TEXT_FONT, TEXT_SIZE * 2, "bold"), text = "Menu", tags = "menu")
+
+	game_canvas.bind("<Button-1>", options)
 
 ## Main ##
 # debug opt
