@@ -403,9 +403,9 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 			elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
 				current_value = MIN_VALUE
 			elif check_alignment(grid, player, line, column):
-				current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
+				current_value = -alpha_beta(score, grid, other_player, True, line, column, depth - 1, -beta, -alpha)
 			else:
-				current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
+				current_value = -alpha_beta(score, grid, other_player, False, continue_line, continue_column, depth - 1, -beta, -alpha)
 			if current_value >= alpha:
 				alpha = current_value
 				max_line = line
@@ -415,38 +415,7 @@ def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	debug_log("eval: " + str(int(alpha)))
 	return max_line, max_column
 
-def ai_min(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
-	min_value = MAX_VALUE + 1
-	other_player = 2 if player == 1 else 1
-
-	if depth == 0:
-		if is_continue:
-			return MAX_VALUE / 2 - (ai_depth - depth)
-		return heuristic(score, grid, player)
-
-	move_list = get_move_list(grid, other_player, score[other_player], is_continue, False)
-	for move in move_list:
-		line = move[0]
-		column = move[1]
-		move_success, eat = play_move(False, score, grid, other_player, line, column)
-		if move_success:
-			if score[other_player] >= 10:
-				current_value = MIN_VALUE + (ai_depth - depth)
-			elif is_continue and check_alignment(grid, player, continue_line, continue_column):
-				current_value = MAX_VALUE - (ai_depth - depth)
-			elif check_alignment(grid, other_player, line, column):
-				current_value = ai_max(score, grid, player, True, line, column, depth - 1, alpha, beta)
-			else:
-				current_value = ai_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
-			min_value = min(current_value, min_value)
-			cancel_move(score, grid, other_player, line, column, eat)
-			if alpha >= min_value or min_value <= MIN_VALUE + (ai_depth - depth):
-				return min_value
-			beta = min(min_value, beta)
-
-	return min_value
-
-def ai_max(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
+def alpha_beta(score, grid, player, is_continue, continue_line, continue_column, depth, alpha, beta):
 	max_value = MIN_VALUE - 1
 	other_player = 2 if player == 1 else 1
 
@@ -466,14 +435,16 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 			elif is_continue and check_alignment(grid, other_player, continue_line, continue_column):
 				current_value = MIN_VALUE + (ai_depth - depth)
 			elif check_alignment(grid, player, line, column):
-				current_value = ai_min(score, grid, player, True, line, column, depth - 1, alpha, beta)
+				current_value = -alpha_beta(score, grid, other_player, True, line, column, depth - 1, -beta, -alpha)
 			else:
-				current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
-			max_value = max(current_value, max_value)
+				current_value = -alpha_beta(score, grid, other_player, False, continue_line, continue_column, depth - 1, -beta, -alpha)
 			cancel_move(score, grid, player, line, column, eat)
-			if beta <= max_value or max_value >= MAX_VALUE - (ai_depth - depth):
-				return max_value
-			alpha = max(max_value, alpha)
+			if current_value > max_value:
+				max_value = current_value
+				if max_value > alpha:
+					alpha = max_value
+					if alpha >= beta or max_value >= MAX_VALUE - (ai_depth - depth):
+						return max_value
 
 	return max_value
 
