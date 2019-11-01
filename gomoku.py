@@ -368,20 +368,21 @@ def get_move_list(grid, player, score, is_continue, is_first):
 		elif power == SAVE_MOVE:
 			save_move_list.append((line, column))
 		elif power == WIN_MOVE:
-			print("win", line, column)
+			if is_first:
+				print("win", line, column)
 			return [(line, column)]
 
-	if is_first:
-		print(save_move_list, top_move_list, good_move_list, ok_move_list)
 	if save_move_list:
-		return save_move_list[:ai_move_number]
-	if top_move_list:
-		return top_move_list[:ai_move_number]
-	if good_move_list:
-		return good_move_list[:ai_move_number]
-	if ok_move_list:
-		return ok_move_list[:ai_move_number]
-	return default_move_list[:ai_move_number]
+		ret_move_list = save_move_list + top_move_list
+	elif top_move_list:
+		ret_move_list = top_move_list + good_move_list
+	elif good_move_list:
+		ret_move_list = good_move_list + ok_move_list
+	else:
+		ret_move_list = ok_move_list + default_move_list
+	if is_first:
+		print(ret_move_list[:ai_move_number])
+	return ret_move_list[:ai_move_number]
 
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
 	alpha = MIN_VALUE - 1
@@ -438,7 +439,7 @@ def ai_min(score, grid, player, is_continue, continue_line, continue_column, dep
 				current_value = ai_max(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 			min_value = min(current_value, min_value)
 			cancel_move(score, grid, other_player, line, column, eat)
-			if alpha >= min_value:
+			if alpha >= min_value or min_value <= MIN_VALUE + (ai_depth - depth):
 				return min_value
 			beta = min(min_value, beta)
 
@@ -469,7 +470,7 @@ def ai_max(score, grid, player, is_continue, continue_line, continue_column, dep
 				current_value = ai_min(score, grid, player, False, continue_line, continue_column, depth - 1, alpha, beta)
 			max_value = max(current_value, max_value)
 			cancel_move(score, grid, player, line, column, eat)
-			if beta <= max_value:
+			if beta <= max_value or max_value >= MAX_VALUE - (ai_depth - depth):
 				return max_value
 			alpha = max(max_value, alpha)
 
@@ -514,7 +515,7 @@ def check_proximity_direction(grid, line, column, direction_line, direction_colu
 def heuristic(score, grid, player):
 	line = 0
 	eval = 0
-	w_score = 512
+	w_score = 1024
 	other_player = 2 if player == 1 else 1
 
 	# wins are check in min/max functions
@@ -530,9 +531,9 @@ def heuristic(score, grid, player):
 			column += 1
 		line += 1
 
-	# add score eval
-	eval += score[player] * w_score * score[player]
-	eval -= score[other_player] * w_score * score[other_player]
+	# add score eval the more player is eating stones, the more ai will care about player eat
+	eval += (score[player] ** 2) * w_score
+	eval -= (score[other_player] ** 2) * w_score
 
 	return eval
 
@@ -552,6 +553,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	space_before = 0
 	space_after = 0
 	broken = False
+	w_score = 512
 	other_player = 2 if player == 1 else 1
 	line_plus_one = line + direction_line
 	column_plus_one = column + direction_column
@@ -575,7 +577,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	and	grid[line_plus_one][column_plus_one] == other_player		\
 	and grid[line_plus_two][column_plus_two] == other_player		\
 	and grid[line_plus_three][column_plus_three] == 0:
-		eval += 2048 * (score[player] + 1)
+		eval += (score[player] + 1) * w_score
 
 	if line_minus_three >= 0                                        \
 	and line_minus_three < LINE_NUMBER                              \
@@ -584,7 +586,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	and	grid[line_minus_one][column_minus_one] == other_player		\
 	and grid[line_minus_two][column_minus_two] == other_player		\
 	and grid[line_minus_three][column_minus_three] == 0:
-		eval += 2048 * (score[player] + 1)
+		eval += (score[player] + 1) * w_score
 
 	# add center eval
 	eval += ((10 - abs(10 - (line + 1))) + (10 - abs(10 - (column + 1))))
@@ -1139,15 +1141,15 @@ def start(event):
 		return
 	elif current[0] == "start_ai":
 		player_number = 1
-		ai_depth = 5
-		ai_move_number = 4
+		ai_depth = 3
+		ai_move_number = 15
 		debug_log("ai_depth: " + str(ai_depth))
 		game_canvas.delete("all")
 		print_game()
 	elif current[0] == "start_player":
 		player_number = 2
-		ai_depth = 5
-		ai_move_number = 4
+		ai_depth = 3
+		ai_move_number = 15
 		debug_log("ai_depth: " + str(ai_depth))
 		game_canvas.delete("all")
 		print_game()
@@ -1260,8 +1262,8 @@ game_canvas = 0
 player_1_score_text = 0
 player_2_score_text = 0
 player_number = 1
-ai_depth = 5
-ai_move_number = 4
+ai_depth = 3
+ai_move_number = 15
 ai_timer = 0
 ai_first = False
 
