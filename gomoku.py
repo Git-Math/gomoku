@@ -369,8 +369,6 @@ def get_move_list(grid, player, score, is_continue, is_first):
 		elif power == SAVE_MOVE:
 			save_move_list.append((line, column))
 		elif power == WIN_MOVE:
-			if is_first:
-				print("win", line, column)
 			return [(line, column)]
 
 	if save_move_list:
@@ -381,8 +379,6 @@ def get_move_list(grid, player, score, is_continue, is_first):
 		ret_move_list = good_move_list + ok_move_list
 	else:
 		ret_move_list = ok_move_list + default_move_list
-	if is_first:
-		print(ret_move_list[:ai_move_number])
 	return ret_move_list[:ai_move_number]
 
 def ai(score, grid, player, is_continue, continue_line, continue_column, depth):
@@ -668,7 +664,7 @@ def left_click(event):
 				else:
 					debug_log("no move found")
 					return
-			print(heuristic(score, grid, player))
+
 			# calc piece_center
 			piece_center_x = column * SQUARE_SIZE + GRID_START
 			piece_center_y = line * SQUARE_SIZE + GRID_START
