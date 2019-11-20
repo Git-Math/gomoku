@@ -521,7 +521,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	space_before = 0
 	space_after = 0
 	broken = False
-	w_score = 512
+	w_score = 1024
 	other_player = 2 if player == 1 else 1
 	line_plus_one = line + direction_line
 	column_plus_one = column + direction_column
@@ -613,7 +613,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	elif player_square_number == 3:
 		if space_before and space_after and space_before + space_after >= 3:
 			# straight three
-			eval += 4096
+			eval += 16384
 		elif broken and space_before and space_after:
 			# broken three
 			eval += 2048
@@ -623,7 +623,7 @@ def eval_square_direction(grid, player, line, column, direction_line, direction_
 	else:
 		if space_before and space_after:
 			# straight four
-			eval += 16384
+			eval += 65536
 		else:
 			# four
 			eval += 4096
@@ -1111,15 +1111,15 @@ def start(event):
 		return
 	elif current[0] == "start_ai":
 		player_number = 1
-		ai_depth = 3
-		ai_move_number = 15
+		ai_depth = 4
+		ai_move_number = 6
 		debug_log("ai_depth: " + str(ai_depth))
 		game_canvas.delete("all")
 		print_game()
 	elif current[0] == "start_player":
 		player_number = 2
-		ai_depth = 3
-		ai_move_number = 15
+		ai_depth = 4
+		ai_move_number = 6
 		debug_log("ai_depth: " + str(ai_depth))
 		game_canvas.delete("all")
 		print_game()
